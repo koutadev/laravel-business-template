@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 142 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 152 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 142 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 152 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -524,6 +524,7 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 | タブ | `<x-tabs :tabs="[...]"><x-tab-panel name="…">…</x-tab-panel></x-tabs>` |
 | カード | `<x-card title="…" subtitle="…">…<x-slot name="actions">…</x-slot></x-card>` |
 | KPI カード | `<x-kpi-card label="今月の受注" :value="2334700" unit="円" href="…" />` |
+| テーブル | `<x-table :columns="$columns" :sort="…" :sort-url="…">` ＋ `<x-table.row>` / `<x-table.cell>` |
 | 日付範囲 | `<x-date-range name="closed" label="期間" basis-label="予定クローズ日" />` |
 | モーダル | `<x-modal name="employee-detail" title="社員の詳細">…</x-modal>` |
 | 確認ダイアログ | `<x-confirm-dialog name="delete-employee" :action="…" method="DELETE">…</x-confirm-dialog>` |
@@ -562,6 +563,34 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 `role="combobox"` / `aria-expanded` / `aria-controls` / `aria-activedescendant` /
 `role="listbox"` / `role="option"` を付けています。選択時には `combobox-selected`
 イベントが飛ぶので、連動する絞り込み（顧客 → その顧客の担当者、など）も組めます。
+
+### テーブル
+
+一覧の表は `<x-table>` に載せます。共通一覧基盤（`TableDefinition`）を使う画面は
+`<x-data-table>` が内部でこれを使うので、**マスタ画面はそのままで新しい見た目**になります。
+定義クラスを使わない表（明細行など）でも同じ部品が使えます。
+
+```blade
+<x-table :columns="$columns" :sort="$sort" :direction="$direction"
+         :sort-url="fn ($column) => route('…', ['sort' => $column->key])"
+         :is-empty="$rows->isEmpty()" actions>
+    @foreach ($rows as $row)
+        <x-table.row :href="route('masters.employees.edit', $row->id)" :muted="$row->trashed()">
+            <x-table.cell mono :wrap="false">{{ $row->code }}</x-table.cell>
+            <x-table.cell strong>{{ $row->name }}</x-table.cell>
+            <x-table.cell align="right">{{ number_format($row->amount) }}</x-table.cell>
+        </x-table.row>
+    @endforeach
+</x-table>
+```
+
+- **列定義**：`Column` オブジェクトでも配列でも渡せます（`label` / `align` / `width` / `sortable` / `wrap`）
+- **ソート**：`sortable` な列は見出しがリンクになり、現在の並びを `aria-sort` と ▲▼ で示します
+- **行クリック**：`href` で行全体をリンクに、`modal` で[モーダル](#モーダル)を開けます。
+  セル内のボタン・リンクを押したときは反応しません（`role="link"` / Enter キー対応）
+- **空状態**：`:is-empty` と `empty="…"`。`<x-data-table>` は検索条件の有無でメッセージを出し分けます
+- **ローディング**：`loading` でスケルトン行（`prefers-reduced-motion` では点滅しません）
+- ゼブラ・ホバーはテーマ色に連動します
 
 ### 日付範囲ピッカー
 
@@ -940,7 +969,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 142 件
+tests/                          # 152 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

@@ -119,6 +119,67 @@
                 </div>
             </x-card>
 
+            {{-- テーブル --}}
+            <x-card title="テーブル" subtitle="ソート / 行クリック / 空状態 / ローディング">
+                <div class="space-y-6">
+                    <div>
+                        <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                            見出しをクリックすると並び替わります（このページ自身に <code>?sort=…</code> を付けて再読み込み）。
+                            行をクリックするとモーダルが開きます（セル内のボタンを押したときは反応しません）。
+                        </p>
+
+                        <x-table :columns="$tableColumns"
+                                 :sort="$tableSort"
+                                 :direction="$tableDirection"
+                                 :sort-url="$tableSortUrl"
+                                 actions>
+                            @foreach ($tableRows as $row)
+                                <x-table.row modal="demo-detail">
+                                    <x-table.cell mono :wrap="false">{{ $row['code'] }}</x-table.cell>
+                                    <x-table.cell strong>{{ $row['name'] }}</x-table.cell>
+                                    <x-table.cell muted>{{ $row['department'] }}</x-table.cell>
+                                    <x-table.cell align="right" :wrap="false">{{ number_format($row['amount']) }}</x-table.cell>
+                                    <x-table.cell align="center">
+                                        <x-badge :tone="$row['tone']">{{ $row['status'] }}</x-badge>
+                                    </x-table.cell>
+                                    <x-table.cell align="right" :wrap="false">
+                                        <x-button size="sm" variant="ghost" type="button"
+                                                  x-on:click="$dispatch('toast', { type: 'info', message: '{{ $row['name'] }} を編集（デモ）' })">
+                                            編集
+                                        </x-button>
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <div>
+                            <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">空状態</p>
+                            <x-table :columns="$tableColumns" is-empty empty="条件に一致するデータがありません。" />
+                        </div>
+
+                        <div>
+                            <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">ローディング</p>
+                            <x-table :columns="$tableColumns" loading :loading-rows="4" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                            行全体をリンクにする例（<code>href</code> を渡す）
+                        </p>
+
+                        <x-table :columns="[['label' => '遷移先'], ['label' => '説明']]">
+                            <x-table.row href="{{ route('ui.catalog') }}#catalog-form">
+                                <x-table.cell strong>フォーム部品へ</x-table.cell>
+                                <x-table.cell muted>この行のどこを押してもページ内リンクへ移動します。</x-table.cell>
+                            </x-table.row>
+                        </x-table>
+                    </div>
+                </div>
+            </x-card>
+
             {{-- 日付範囲ピッカー --}}
             <x-card title="日付範囲ピッカー" subtitle="相対プリセット + カスタム期間 + 指定なし">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">

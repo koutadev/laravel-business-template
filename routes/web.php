@@ -11,6 +11,7 @@ use App\Http\Controllers\Masters\ProductCategoryController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Support\DataTable\Column;
 use App\Support\Routing\MasterRoutes;
 use App\Support\Ui\DateRange;
 use App\Support\Ui\Toast;
@@ -112,7 +113,40 @@ if (! app()->environment('production')) {
             10 => '株式会社コウヨウホールディングス',
         ];
 
+        // テーブルの見本(このページ自身でソートを試せるようにする)
+        $tableSort = in_array(request('sort'), ['code', 'name', 'amount'], true) ? (string) request('sort') : 'code';
+        $tableDirection = request('direction') === 'desc' ? 'desc' : 'asc';
+
+        $tableRows = collect([
+            ['code' => 'EMP-0001', 'name' => '青山 彩', 'department' => '営業部', 'amount' => 1320000, 'status' => '受注', 'tone' => 'success'],
+            ['code' => 'EMP-0002', 'name' => '井川 亮', 'department' => 'システム開発部', 'amount' => 880000, 'status' => '提案中', 'tone' => 'info'],
+            ['code' => 'EMP-0003', 'name' => '上野 千夏', 'department' => '人材事業部', 'amount' => 2475000, 'status' => '見積提示', 'tone' => 'warning'],
+            ['code' => 'EMP-0004', 'name' => '江原 拓真', 'department' => '営業部', 'amount' => 396000, 'status' => '失注', 'tone' => 'danger'],
+        ])
+            ->sortBy($tableSort, SORT_REGULAR, $tableDirection === 'desc')
+            ->values()
+            ->all();
+
+        $tableColumns = [
+            Column::fromArray(['key' => 'code', 'label' => '社員コード', 'sortable' => true, 'wrap' => false, 'width' => 'w-32']),
+            Column::fromArray(['key' => 'name', 'label' => '氏名', 'sortable' => true]),
+            Column::fromArray(['key' => 'department', 'label' => '部署']),
+            Column::fromArray(['key' => 'amount', 'label' => '金額', 'sortable' => true, 'align' => 'right', 'wrap' => false]),
+            Column::fromArray(['key' => 'status', 'label' => '状態', 'align' => 'center']),
+        ];
+
+        $tableSortUrl = function (Column $column) use ($tableSort, $tableDirection): string {
+            $direction = $tableSort === $column->key && $tableDirection === 'asc' ? 'desc' : 'asc';
+
+            return route('ui.catalog', ['sort' => $column->key, 'direction' => $direction]);
+        };
+
         return view('ui.catalog', [
+            'tableColumns' => $tableColumns,
+            'tableRows' => $tableRows,
+            'tableSort' => $tableSort,
+            'tableDirection' => $tableDirection,
+            'tableSortUrl' => $tableSortUrl,
             'paginator' => $paginator,
             'customers' => $customers,
             // 日付範囲ピッカーの送信値をサーバ側で解決した結果(見本)

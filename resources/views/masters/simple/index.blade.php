@@ -1,7 +1,7 @@
 {{-- 部署 / 役職 / 商品分類で共有する一覧画面 --}}
 <x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName">
     @foreach ($table->items() as $record)
-        <tr class="{{ $record->trashed() ? 'opacity-60' : '' }}">
+        <x-table.row :muted="$record->trashed()">
             <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ $record->code }}</td>
             <td class="px-4 py-3 font-medium">{{ $record->name }}</td>
             <td class="whitespace-nowrap px-4 py-3 text-center">
@@ -12,6 +12,6 @@
             </td>
 
             <x-master-row-actions :record="$record" :route-name="$routeName" :resource-label="$resourceLabel" />
-        </tr>
+        </x-table.row>
     @endforeach
 </x-master-index>

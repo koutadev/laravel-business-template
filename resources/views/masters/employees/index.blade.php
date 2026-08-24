@@ -1,6 +1,6 @@
 <x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName">
     @foreach ($table->items() as $employee)
-        <tr class="{{ $employee->trashed() ? 'opacity-60' : '' }}">
+        <x-table.row :muted="$employee->trashed()">
             <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ $employee->code }}</td>
             <td class="px-4 py-3 font-medium">{{ $employee->name }}</td>
             <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $employee->department?->name ?? '—' }}</td>
@@ -19,6 +19,6 @@
             </td>
 
             <x-master-row-actions :record="$employee" :route-name="$routeName" :resource-label="$resourceLabel" />
-        </tr>
+        </x-table.row>
     @endforeach
 </x-master-index>
