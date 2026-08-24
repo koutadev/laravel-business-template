@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 132 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 142 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 132 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 142 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -524,6 +524,7 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 | タブ | `<x-tabs :tabs="[...]"><x-tab-panel name="…">…</x-tab-panel></x-tabs>` |
 | カード | `<x-card title="…" subtitle="…">…<x-slot name="actions">…</x-slot></x-card>` |
 | KPI カード | `<x-kpi-card label="今月の受注" :value="2334700" unit="円" href="…" />` |
+| 日付範囲 | `<x-date-range name="closed" label="期間" basis-label="予定クローズ日" />` |
 | モーダル | `<x-modal name="employee-detail" title="社員の詳細">…</x-modal>` |
 | 確認ダイアログ | `<x-confirm-dialog name="delete-employee" :action="…" method="DELETE">…</x-confirm-dialog>` |
 | アイコン | `<x-icon name="employees" class="h-4 w-4" />` |
@@ -561,6 +562,43 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 `role="combobox"` / `aria-expanded` / `aria-controls` / `aria-activedescendant` /
 `role="listbox"` / `role="option"` を付けています。選択時には `combobox-selected`
 イベントが飛ぶので、連動する絞り込み（顧客 → その顧客の担当者、など）も組めます。
+
+### 日付範囲ピッカー
+
+一覧の期間絞り込み用の部品です。**相対プリセット**（今日 / 今週 / 今月 / 今四半期 / 今年度 /
+過去 7・30・90 日）とカスタム期間、「指定なし（全期間）」に対応します。
+
+```blade
+<form method="GET">
+    <x-date-range name="closed" label="期間" basis-label="予定クローズ日" />
+    <x-button type="submit">絞り込む</x-button>
+</form>
+```
+
+送信されるのは 3 つの hidden で、**相対プリセットは「キー」だけを送ります**。
+
+| 送信名 | 中身 |
+| --- | --- |
+| `closed_preset` | `this_month` などのキー / `custom` / `none` |
+| `closed_from` `closed_to` | カスタム指定のときの開始日・終了日 |
+
+受け取る側は期間に解決してから使います。プリセットは**参照するたびに計算し直す**ので、
+月が替わっても指定し直す必要がありません（固定日付を URL に焼き付けません）。
+
+```php
+$range = DateRange::fromRequest($request, 'closed');
+
+$range->apply($query, 'expected_close_date');   // 期間で絞り込む
+$range->label();                                 // "2026/08/01 〜 2026/08/31"
+$range->toQuery('closed');                       // ページャなどに引き継ぐクエリ
+```
+
+**基準日（どの日付で絞るか）は呼び出し側から渡します。**
+`basis-label` は表示だけ、`basis` を渡すと `{name}_basis` として一緒に送られるので、
+「予定クローズ日 / 受注日」を切り替えるラジオを隣に置いて連携できます。
+
+年度の開始月と週の開始曜日は `config/ui.php`（`UI_FISCAL_YEAR_START_MONTH` /
+`UI_WEEK_STARTS_ON`）で変更できます。既定は **4 月始まり・月曜始まり**です。
 
 ### モーダル
 
@@ -885,6 +923,7 @@ app/
 
 config/
 ├── theme.php                   # サービス名・ロゴ・配色
+├── ui.php                      # 年度の開始月・週の開始曜日（日付範囲ピッカー）
 └── activity_log.php            # 監査ログの ON/OFF
 
 resources/
@@ -901,7 +940,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 132 件
+tests/                          # 142 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

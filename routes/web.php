@@ -12,6 +12,7 @@ use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Support\Routing\MasterRoutes;
+use App\Support\Ui\DateRange;
 use App\Support\Ui\Toast;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -111,7 +112,12 @@ if (! app()->environment('production')) {
             10 => '株式会社コウヨウホールディングス',
         ];
 
-        return view('ui.catalog', ['paginator' => $paginator, 'customers' => $customers]);
+        return view('ui.catalog', [
+            'paginator' => $paginator,
+            'customers' => $customers,
+            // 日付範囲ピッカーの送信値をサーバ側で解決した結果(見本)
+            'demoRange' => DateRange::fromRequest(request(), 'demo_range'),
+        ]);
     })->name('ui.catalog');
 
     // 編集フォーム用モーダルの見本(バリデーションエラーで開き直す)

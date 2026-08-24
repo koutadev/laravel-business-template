@@ -119,6 +119,42 @@
                 </div>
             </x-card>
 
+            {{-- 日付範囲ピッカー --}}
+            <x-card title="日付範囲ピッカー" subtitle="相対プリセット + カスタム期間 + 指定なし">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <x-date-range name="catalog_closed" label="期間（相対プリセット）"
+                                  basis-label="予定クローズ日" preset="this_month"
+                                  help="「今月」などのキーだけを送るので、月が替わっても指定し直す必要がありません。" />
+
+                    <x-date-range name="catalog_custom" label="期間（カスタム指定）"
+                                  basis-label="受注日" from="2026-04-01" to="2026-06-30"
+                                  help="開始日・終了日を直接指定した状態。" />
+
+                    <x-date-range name="catalog_none" label="期間（指定なし）"
+                                  help="何も選んでいない状態。全期間が対象になります。" />
+
+                    <x-date-range name="catalog_basis" label="基準日を一緒に送る例"
+                                  basis-label="受注日" basis="ordered_at" preset="this_fiscal_year"
+                                  help="basis を渡すと catalog_basis_basis として送られ、基準日の切替 UI と連携できます。" />
+                </div>
+
+                {{-- サーバ側での解決を確かめる小さなフォーム --}}
+                <form method="GET" action="{{ route('ui.catalog') }}"
+                      class="mt-6 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                    <div class="w-72">
+                        <x-date-range name="demo_range" label="送信して解決結果を見る" basis-label="予定クローズ日" />
+                    </div>
+
+                    <x-button type="submit" size="sm" variant="secondary">この期間で絞り込む</x-button>
+
+                    <p class="text-xs text-gray-600 dark:text-gray-400">
+                        解決結果：
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ $demoRange->preset->label() }}</span>
+                        ／ <span class="tabular-nums">{{ $demoRange->label() }}</span>
+                    </p>
+                </form>
+            </x-card>
+
             {{-- モーダル --}}
             <x-card title="モーダル" subtitle="詳細表示 / 編集フォーム / 確認ダイアログ"
                     x-data
