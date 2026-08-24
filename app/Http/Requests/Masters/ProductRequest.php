@@ -13,7 +13,8 @@ class ProductRequest extends MasterRequest
     {
         return [
             'name' => ['required', 'string', 'max:191'],
-            'product_category_id' => ['nullable', Rule::exists('product_categories', 'id')->whereNull('deleted_at')],
+            // bail + integer は、数値でない値のまま exists へ渡して型エラーにしないため
+            'product_category_id' => ['bail', 'nullable', 'integer', Rule::exists('product_categories', 'id')->whereNull('deleted_at')],
             'unit_price' => ['required', 'numeric', 'min:0', 'max:9999999999'],
             'unit' => ['nullable', 'string', 'max:16'],
             'is_active' => ['boolean'],
