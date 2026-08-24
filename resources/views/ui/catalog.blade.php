@@ -119,6 +119,75 @@
                 </div>
             </x-card>
 
+            {{-- モーダル --}}
+            <x-card title="モーダル" subtitle="詳細表示 / 編集フォーム / 確認ダイアログ"
+                    x-data
+                    @confirmed.window="$store.toast.push({ type: 'success', message: '実行しました（デモ）。' })">
+                <div class="flex flex-wrap gap-3">
+                    <x-button type="button" variant="secondary"
+                              x-on:click="$dispatch('open-modal', 'demo-detail')">詳細を開く</x-button>
+
+                    <x-button type="button" variant="secondary"
+                              x-on:click="$dispatch('open-modal', 'demo-edit')">編集フォームを開く</x-button>
+
+                    <x-button type="button" variant="danger"
+                              x-on:click="$dispatch('open-modal', 'demo-confirm')">削除（確認ダイアログ）</x-button>
+                </div>
+
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    Esc とオーバーレイのクリックで閉じます（確認ダイアログは誤操作防止のため閉じません）。
+                    開いているあいだは Tab がモーダル内を循環し、閉じると元のボタンにフォーカスが戻ります。
+                </p>
+
+                {{-- (1) 詳細表示 --}}
+                <x-modal name="demo-detail" title="社員の詳細" size="md">
+                    <dl class="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+                        @foreach ([
+                            '社員コード' => 'EMP-0007',
+                            '氏名' => '山田 花子',
+                            '部署' => '営業部',
+                            '役職' => '課長',
+                            'メールアドレス' => 'yamada@example.com',
+                            '在籍状態' => '在籍',
+                        ] as $label => $value)
+                            <div>
+                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $label }}</dt>
+                                <dd class="mt-0.5 text-sm text-gray-900 dark:text-gray-100">{{ $value }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+
+                    <x-slot name="footer">
+                        <x-button type="button" variant="secondary" x-on:click="$dispatch('close')">閉じる</x-button>
+                        <x-button type="button">編集</x-button>
+                    </x-slot>
+                </x-modal>
+
+                {{-- (2) 編集フォーム(送信してエラーなら開いたまま戻る) --}}
+                <x-modal name="demo-edit" title="社員の編集" size="md">
+                    <form method="POST" action="{{ route('ui.catalog.demo-form') }}" id="demo-edit-form" class="space-y-4">
+                        @csrf
+                        <x-modal-marker name="demo-edit" />
+
+                        <x-form.text name="demo_title" label="件名" required
+                                     help="空のまま、または 21 文字以上で送るとエラーになります（モーダルは開いたまま）。" />
+
+                        <x-form.select name="demo_department" label="部署"
+                                       :options="['sales' => '営業部', 'dev' => 'システム開発部']" selected="sales" />
+                    </form>
+
+                    <x-slot name="footer">
+                        <x-button type="button" variant="secondary" x-on:click="$dispatch('close')">キャンセル</x-button>
+                        <x-button type="submit" form="demo-edit-form">保存</x-button>
+                    </x-slot>
+                </x-modal>
+
+                {{-- (3) 確認ダイアログ --}}
+                <x-confirm-dialog name="demo-confirm" title="この社員を削除しますか？" confirm="削除する">
+                    論理削除のため、データは残ります（管理者は復元できます）。
+                </x-confirm-dialog>
+            </x-card>
+
             {{-- バッジ --}}
             <x-card title="バッジ / ステータスチップ" subtitle="意味（tone）で指定する">
                 <div class="flex flex-wrap items-center gap-3">

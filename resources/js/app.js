@@ -2,6 +2,7 @@ import Alpine from 'alpinejs';
 
 import appShell from './app-shell';
 import combobox from './combobox';
+import modal from './modal';
 import registerToastStore from './toast';
 import './charts';
 
@@ -12,6 +13,9 @@ Alpine.data('appShell', appShell);
 
 // コンボボックス（入力で候補を絞るセレクト）
 Alpine.data('combobox', combobox);
+
+// モーダル（フォーカストラップつき）
+Alpine.data('modal', modal);
 
 // トースト通知（Alpine のストア）
 registerToastStore(Alpine);

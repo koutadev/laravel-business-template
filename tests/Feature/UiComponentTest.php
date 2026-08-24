@@ -264,6 +264,113 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_modal_renders_its_header_body_and_footer(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+            <x-modal name="employee-detail" title="社員の詳細" size="lg">
+                本文
+                <x-slot name="footer">操作</x-slot>
+            </x-modal>
+        BLADE);
+
+        $this->assertStringContainsString('role="dialog"', $html);
+        $this->assertStringContainsString('aria-modal="true"', $html);
+        $this->assertStringContainsString('aria-labelledby="employee-detail-title"', $html);
+        $this->assertStringContainsString('社員の詳細', $html);
+        $this->assertStringContainsString('本文', $html);
+        $this->assertStringContainsString('操作', $html);
+        $this->assertStringContainsString('sm:max-w-4xl', $html, 'size=lg は幅が広い。');
+
+        // フォーカストラップと開閉のイベント
+        $this->assertStringContainsString('trap($event)', $html);
+        $this->assertStringContainsString('open-modal.window', $html);
+        $this->assertStringContainsString('keydown.escape.window', $html);
+    }
+
+    #[Test]
+    public function a_modal_can_refuse_to_close_on_escape_or_overlay(): void
+    {
+        $closable = Blade::render('<x-modal name="a" title="開閉できる">本文</x-modal>');
+        $this->assertStringContainsString('closable\u0022:true', $closable);
+        $this->assertStringContainsString('aria-label="閉じる"', $closable);
+
+        $locked = Blade::render('<x-modal name="b" title="閉じない" :closable="false">本文</x-modal>');
+        $this->assertStringContainsString('closable\u0022:false', $locked);
+        $this->assertStringNotContainsString('aria-label="閉じる"', $locked, '閉じるボタンも出さない。');
+    }
+
+    #[Test]
+    public function a_modal_is_closed_by_default_but_can_be_shown(): void
+    {
+        $closed = Blade::render('<x-modal name="edit-employee" title="編集">本文</x-modal>');
+        $this->assertStringContainsString('show\u0022:false', $closed);
+        $this->assertStringContainsString('style="display: none;"', $closed);
+
+        $shown = Blade::render('<x-modal name="edit-employee" title="編集" :show="true">本文</x-modal>');
+        $this->assertStringContainsString('show\u0022:true', $shown);
+        $this->assertStringContainsString('style="display: block;"', $shown);
+    }
+
+    // 「送信 → エラー → 開いたまま戻る」は
+    // the_edit_modal_stays_open_when_validation_fails で実際の往復を確認している。
+
+    #[Test]
+    public function the_modal_marker_writes_the_hidden_field(): void
+    {
+        $html = Blade::render('<x-modal-marker name="edit-employee" />');
+
+        $this->assertStringContainsString('<input type="hidden" name="_modal" value="edit-employee">', $html);
+    }
+
+    #[Test]
+    public function a_confirm_dialog_renders_a_form_with_the_given_method(): void
+    {
+        $html = Blade::render(<<<'BLADE'
+            <x-confirm-dialog name="delete-employee" title="削除しますか？"
+                              action="/masters/employees/1" method="DELETE" confirm="削除する">
+                論理削除のためデータは残ります。
+            </x-confirm-dialog>
+        BLADE);
+
+        $this->assertStringContainsString('削除しますか？', $html);
+        $this->assertStringContainsString('論理削除のためデータは残ります。', $html);
+        $this->assertStringContainsString('action="/masters/employees/1"', $html);
+        $this->assertStringContainsString('name="_method" value="DELETE"', $html);
+        $this->assertStringContainsString('削除する', $html);
+        $this->assertStringContainsString('キャンセル', $html);
+
+        // 誤操作防止のため Esc / オーバーレイでは閉じない
+        $this->assertStringContainsString('closable\u0022:false', $html);
+    }
+
+    #[Test]
+    public function the_edit_modal_stays_open_when_validation_fails(): void
+    {
+        $this->from(route('ui.catalog'))
+            ->post(route('ui.catalog.demo-form'), ['_modal' => 'demo-edit', 'demo_title' => ''])
+            ->assertRedirect(route('ui.catalog'))
+            ->assertSessionHasErrors('demo_title');
+
+        // 戻り先ではモーダルが開いた状態で、エラーが出ている
+        $this->followingRedirects()
+            ->from(route('ui.catalog'))
+            ->post(route('ui.catalog.demo-form'), ['_modal' => 'demo-edit', 'demo_title' => ''])
+            ->assertOk()
+            ->assertSee('show\u0022:true', false)
+            ->assertSee('件名は必須です。');
+    }
+
+    #[Test]
+    public function the_edit_modal_reports_success_with_a_toast(): void
+    {
+        $this->from(route('ui.catalog'))
+            ->post(route('ui.catalog.demo-form'), ['_modal' => 'demo-edit', 'demo_title' => 'テスト件名'])
+            ->assertRedirect(route('ui.catalog'))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas(Toast::SESSION_KEY);
+    }
+
+    #[Test]
     public function a_flashed_toast_is_rendered(): void
     {
         session()->put(Toast::SESSION_KEY, Toast::success('保存しました。'));
@@ -290,6 +397,13 @@ class UiComponentTest extends TestCase
             'ページネーション',
             'カード',
         ]);
+
+        // モーダル(詳細 / 編集フォーム / 確認ダイアログ)
+        $response->assertSee('モーダル')
+            ->assertSee('role="dialog"', false)
+            ->assertSee('社員の詳細')
+            ->assertSee('name="_modal"', false)
+            ->assertSee('この社員を削除しますか？');
 
         // コンボボックス(静的・非同期・無効・エラー)
         $response->assertSee('コンボボックス')

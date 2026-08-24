@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 125 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 132 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 125 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 132 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -524,6 +524,8 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 | タブ | `<x-tabs :tabs="[...]"><x-tab-panel name="…">…</x-tab-panel></x-tabs>` |
 | カード | `<x-card title="…" subtitle="…">…<x-slot name="actions">…</x-slot></x-card>` |
 | KPI カード | `<x-kpi-card label="今月の受注" :value="2334700" unit="円" href="…" />` |
+| モーダル | `<x-modal name="employee-detail" title="社員の詳細">…</x-modal>` |
+| 確認ダイアログ | `<x-confirm-dialog name="delete-employee" :action="…" method="DELETE">…</x-confirm-dialog>` |
 | アイコン | `<x-icon name="employees" class="h-4 w-4" />` |
 
 入力部品はラベル・必須マーク・ヘルプ・**バリデーションエラー**・`old()` の復元まで面倒を見ます。
@@ -559,6 +561,55 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 `role="combobox"` / `aria-expanded` / `aria-controls` / `aria-activedescendant` /
 `role="listbox"` / `role="option"` を付けています。選択時には `combobox-selected`
 イベントが飛ぶので、連動する絞り込み（顧客 → その顧客の担当者、など）も組めます。
+
+### モーダル
+
+詳細表示・編集フォーム・確認ダイアログの 3 用途を 1 つの部品でまかないます。
+開閉は名前つきのイベントで行うので、開くボタンはどこに置いても構いません。
+
+```blade
+<x-button type="button" x-on:click="$dispatch('open-modal', 'employee-detail')">詳細</x-button>
+
+<x-modal name="employee-detail" title="社員の詳細" size="md">
+    本文（1-B のフォーム部品などをそのまま置ける）
+
+    <x-slot name="footer">
+        <x-button type="button" variant="secondary" x-on:click="$dispatch('close')">閉じる</x-button>
+        <x-button type="submit" form="employee-form">保存</x-button>
+    </x-slot>
+</x-modal>
+```
+
+- サイズは `sm` / `md` / `lg`
+- **オーバーレイのクリックと Esc で閉じる**（`:closable="false"` で無効化。確認ダイアログは既定で無効）
+- **フォーカストラップ**：開いているあいだ Tab はモーダル内を循環し、閉じると開く前の要素にフォーカスが戻る。背景のスクロールも止まる
+- `role="dialog"` / `aria-modal="true"` / `aria-labelledby`、アニメーションは `prefers-reduced-motion` 対応
+
+**編集フォームでバリデーションエラーが出たとき**は、フォームに目印を 1 行入れておくと
+エラー付きでモーダルが開いた状態に戻ります（サーバサイド送信のまま使えます）。
+
+```blade
+<form method="POST" action="{{ route('masters.employees.update', $employee->id) }}">
+    @csrf @method('PUT')
+    <x-modal-marker name="edit-employee" />   {{-- ← これ --}}
+
+    <x-form.text name="name" label="氏名" required />
+</form>
+```
+
+確認ダイアログは「メッセージ ＋ 実行 / キャンセル」の最小構成です。
+
+```blade
+<x-button type="button" variant="danger" x-on:click="$dispatch('open-modal', 'delete-employee')">削除</x-button>
+
+<x-confirm-dialog name="delete-employee" title="社員を削除しますか？"
+                  :action="route('masters.employees.destroy', $employee->id)"
+                  method="DELETE" confirm="削除する">
+    論理削除のためデータは残ります。
+</x-confirm-dialog>
+```
+
+`action` を渡さない場合は、実行時に `confirmed` イベントが飛ぶだけになります（任意の処理に繋げられます）。
 
 ### 見た目の指定は enum で
 
@@ -850,7 +901,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 125 件
+tests/                          # 132 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

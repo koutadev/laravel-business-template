@@ -12,6 +12,7 @@ use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Support\Routing\MasterRoutes;
+use App\Support\Ui\Toast;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -112,6 +113,20 @@ if (! app()->environment('production')) {
 
         return view('ui.catalog', ['paginator' => $paginator, 'customers' => $customers]);
     })->name('ui.catalog');
+
+    // 編集フォーム用モーダルの見本(バリデーションエラーで開き直す)
+    Route::post('/_ui/demo-form', function () {
+        request()->validate(
+            ['demo_title' => ['required', 'string', 'max:20']],
+            [],
+            ['demo_title' => '件名'],
+        );
+
+        return back()->with(
+            Toast::SESSION_KEY,
+            Toast::success('保存しました(デモなので実際には保存していません)。'),
+        );
+    })->name('ui.catalog.demo-form');
 
     // コンボボックスの非同期モードの見本(?q= で絞り込み、[{value,label}] を返す)
     Route::get('/_ui/options', function () {
