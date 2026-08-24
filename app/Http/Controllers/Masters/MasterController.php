@@ -52,9 +52,14 @@ abstract class MasterController extends Controller
     /**
      * モーダルの詳細に出す項目。
      *
+     * 空を返すと詳細モーダルを使わない一覧として扱う(行クリックの導線を出さない)。
+     *
      * @return array<string, string|null> [見出し => 値]
      */
-    abstract protected function detailRows(BaseModel $record): array;
+    protected function detailRows(BaseModel $record): array
+    {
+        return [];
+    }
 
     /**
      * 登録・編集フォームに渡すデータ(選択肢など)。
@@ -63,7 +68,10 @@ abstract class MasterController extends Controller
      *
      * @return array<string, mixed>
      */
-    abstract protected function formData(BaseModel $record): array;
+    protected function formData(BaseModel $record): array
+    {
+        return $this->sharedViewData();
+    }
 
     /**
      * 入力項目のビュー(フルページとモーダルで共有する部分)。
@@ -95,6 +103,9 @@ abstract class MasterController extends Controller
         $record = $this->modelClass()::query()
             ->when($this->canManageDeleted($request), fn ($query) => $query->withTrashed())
             ->findOrFail($id);
+
+        // 詳細の定義が無い一覧では使わない
+        abort_if($this->detailRows($record) === [], 404);
 
         return view('masters._detail', $this->detailData($record));
     }
