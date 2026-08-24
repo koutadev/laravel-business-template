@@ -1,6 +1,7 @@
 @props([
     'href' => null,
     'modal' => null,
+    'detailUrl' => null,
     'muted' => false,
 ])
 
@@ -10,6 +11,7 @@
 
     $onClick = match (true) {
         $href !== null => $guard." window.location.href = '".e($href)."';",
+        $detailUrl !== null => $guard." window.dispatchEvent(new CustomEvent('open-detail', { detail: '".e($detailUrl)."' }));",
         $modal !== null => $guard." window.dispatchEvent(new CustomEvent('open-modal', { detail: '".e($modal)."' }));",
         default => null,
     };
@@ -20,8 +22,9 @@
 {{--
     一覧の 1 行。
 
-    href を渡すと行全体がその URL へ、modal を渡すと行クリックで
-    その名前のモーダルが開く(1-D と連携。フェーズ2 のマスタ UI で使う)。
+    href を渡すと行全体がその URL へ、modal を渡すとその名前のモーダルが開く。
+    detail-url を渡すと、その URL から詳細を取ってきてモーダルに表示する
+    (マスタ一覧の行クリック)。
 --}}
 <tr @if ($onClick) onclick="{{ $onClick }}"
         onkeydown="if (event.key === 'Enter' && event.target === this) { this.click(); }"

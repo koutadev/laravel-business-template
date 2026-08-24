@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 172 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 181 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 172 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 181 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -480,6 +480,27 @@ new MasterCard(
 - ルートが登録されていないカードは自動的に出ません
 - `master.view` があれば「開く」、`master.manage` があれば「新規登録」も表示します
 - 業務システムごとにマスタが違う場合は、`MasterCatalog` を継承してコンテナに差し込みます
+
+### 一覧の行クリック → モーダルで詳細・編集・削除
+
+マスタ一覧は**行をクリックするとモーダルが開き、その場で詳細の確認・編集・削除**ができます。
+画面遷移を減らすための仕組みで、マスタごとに作り込む必要はありません。
+
+| やること | どこに書くか |
+| --- | --- |
+| 行クリックの導線 | 一覧の `<x-table.row :detail-url="route($routeName.'.detail', $record->id)">` |
+| 詳細に出す項目 | コントローラの `detailRows(BaseModel $record): array` |
+| 編集フォームの入力項目 | `masters/{master}/fields.blade.php`（フルページのフォームと共有） |
+
+モーダル本体・削除の確認ダイアログ・詳細の取得は共通です（`x-master-index` が内包）。
+詳細の中身は開いたときに `"/masters/{master}/{id}/detail"` から取得するので、一覧の HTML は重くなりません。
+
+**バリデーションエラーのときはモーダルを閉じません。** 編集フォームには
+`<x-modal-marker name="master-detail" />` と対象 ID が入っており、エラーで戻ると
+サーバ側がその行の詳細を描き直し、編集フォームを開いた状態＋エラー表示で復帰します。
+
+保存・削除・復元の結果は[トースト](#ui-部品デザインシステム)で通知します。
+`master.manage` を持たないユーザーには編集・削除のボタンを出しません（ルート側でも検査します）。
 
 ### メニューを増やす・差し替える
 
@@ -1042,7 +1063,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 172 件
+tests/                          # 181 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

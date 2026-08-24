@@ -1,6 +1,7 @@
-<x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName">
+<x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName" :initial-detail="$initialDetail ?? null">
     @foreach ($table->items() as $product)
-        <x-table.row :muted="$product->trashed()">
+        <x-table.row :muted="$product->trashed()"
+                     :detail-url="route($routeName.'.detail', $product->id)">
             <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ $product->code }}</td>
             <td class="px-4 py-3 font-medium">{{ $product->name }}</td>
             <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $product->category?->name ?? '—' }}</td>

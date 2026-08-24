@@ -1,6 +1,7 @@
-<x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName">
+<x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName" :initial-detail="$initialDetail ?? null">
     @foreach ($table->items() as $partner)
-        <x-table.row :muted="$partner->trashed()">
+        <x-table.row :muted="$partner->trashed()"
+                     :detail-url="route($routeName.'.detail', $partner->id)">
             <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ $partner->code }}</td>
             <td class="px-4 py-3 font-medium">{{ $partner->name }}</td>
             <td class="whitespace-nowrap px-4 py-3 text-center text-gray-600 dark:text-gray-400">

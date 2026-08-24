@@ -1,7 +1,8 @@
 {{-- 部署 / 役職 / 商品分類で共有する一覧画面 --}}
-<x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName">
+<x-master-index :table="$table" :resource-label="$resourceLabel" :route-name="$routeName" :initial-detail="$initialDetail ?? null">
     @foreach ($table->items() as $record)
-        <x-table.row :muted="$record->trashed()">
+        <x-table.row :muted="$record->trashed()"
+                     :detail-url="route($routeName.'.detail', $record->id)">
             <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">{{ $record->code }}</td>
             <td class="px-4 py-3 font-medium">{{ $record->name }}</td>
             <td class="whitespace-nowrap px-4 py-3 text-center">

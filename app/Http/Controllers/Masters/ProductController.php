@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Masters;
 
 use App\Http\Requests\Masters\ProductRequest;
+use App\Models\BaseModel;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Support\DataTable\TableDefinition;
@@ -59,10 +60,28 @@ class ProductController extends MasterController
     }
 
     /**
+     * @return array<string, string|null>
+     */
+    protected function detailRows(BaseModel $record): array
+    {
+        /** @var Product $record */
+        return [
+            '商品コード' => $record->code,
+            '商品名' => $record->name,
+            '分類' => $record->category?->name,
+            '標準単価' => number_format((float) $record->unit_price),
+            '単位' => $record->unit,
+            '状態' => $record->activeLabel(),
+            '最終更新' => $record->updated_at?->format('Y/m/d H:i'),
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
-    private function formData(Product $product): array
+    protected function formData(BaseModel $product): array
     {
+        /** @var Product $product */
         return array_merge($this->sharedViewData(), [
             'product' => $product,
             'categoryOptions' => ProductCategory::query()->active()->orderBy('code')->pluck('name', 'id')->all(),

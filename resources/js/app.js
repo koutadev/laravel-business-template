@@ -4,6 +4,7 @@ import appShell from './app-shell';
 import combobox from './combobox';
 import dateRange from './date-range';
 import datepicker from './datepicker';
+import masterDetail from './master-detail';
 import modal from './modal';
 import registerToastStore from './toast';
 import './charts';
@@ -24,6 +25,9 @@ Alpine.data('datepicker', datepicker);
 
 // モーダル（フォーカストラップつき）
 Alpine.data('modal', modal);
+
+// 一覧の行クリックで開く詳細モーダル
+Alpine.data('masterDetail', masterDetail);
 
 // トースト通知（Alpine のストア）
 registerToastStore(Alpine);
