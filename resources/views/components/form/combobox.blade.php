@@ -16,6 +16,7 @@
 
 @php
     use App\Support\Ui\Input;
+    use App\Support\Ui\SearchText;
     use App\Support\Ui\Size;
 
     $inputId = $id ?? $name;
@@ -27,7 +28,12 @@
     $items = [];
 
     foreach ($options as $value => $optionLabel) {
-        $items[] = ['value' => (string) $value, 'label' => (string) $optionLabel];
+        $items[] = [
+            'value' => (string) $value,
+            'label' => (string) $optionLabel,
+            // ひらがな/カタカナ・全角半角・大文字小文字を揃えた検索用の文字列
+            'search' => SearchText::normalize((string) $optionLabel),
+        ];
     }
 
     $currentLabel = '';

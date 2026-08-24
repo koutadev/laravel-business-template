@@ -93,9 +93,10 @@ class UiComponentTest extends TestCase
         $this->assertStringContainsString('value="11000"', $number);
         $this->assertStringContainsString('type="number"', $number);
 
+        // 日付は共通のカレンダー部品(x-datepicker)を使う
         $date = Blade::render('<x-form.date name="closed_on" label="予定日" value="2026-08-24" />');
-        $this->assertStringContainsString('type="date"', $date);
-        $this->assertStringContainsString('value="2026-08-24"', $date);
+        $this->assertStringContainsString('x-data="datepicker(', $date);
+        $this->assertStringContainsString('2026-08-24', $date);
 
         $select = Blade::render(
             '<x-form.select name="status" label="状態" :options="$options" selected="won" placeholder="選択" />',
@@ -218,6 +219,48 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_combobox_can_be_searched_with_hiragana_or_katakana(): void
+    {
+        $this->withViewErrors([]);
+
+        $html = Blade::render(
+            '<x-form.combobox name="partner_id" :options="$options" />',
+            ['options' => [1 => 'アオイ商事', 2 => 'ｲﾛﾊ物産']],
+        );
+
+        // 候補には正規化済みの検索キーを持たせておき、入力側は JS が同じ規則で正規化する
+        $this->assertStringContainsString('search\u0022:\u0022あおい商事', $html);
+        $this->assertStringContainsString('search\u0022:\u0022いろは物産', $html);
+    }
+
+    #[Test]
+    public function the_async_endpoint_matches_kana_input(): void
+    {
+        foreach (['あおい', 'アオイ', 'ｱｵｲ'] as $query) {
+            $items = $this->getJson(route('ui.catalog.options', ['q' => $query]))->assertOk()->json();
+
+            $this->assertSame('アオイ商事', $items[0]['label'] ?? null, "「{$query}」で見つかること");
+        }
+    }
+
+    #[Test]
+    public function the_toast_buttons_live_inside_an_alpine_scope(): void
+    {
+        // Alpine のスコープが無いと $dispatch のボタンが動かないため、
+        // カタログのページ全体に x-data を置いている
+        $this->get(route('ui.catalog'))
+            ->assertOk()
+            ->assertSee('<div x-data class="mx-auto', false)
+            ->assertSee('window.toast(', false);
+
+        $html = $this->get(route('ui.catalog'))->getContent();
+
+        foreach (['success', 'danger', 'info', 'warning'] as $type) {
+            $this->assertStringContainsString("type: '".$type."'", $html, $type.' のトーストを出すボタンがある');
+        }
+    }
+
+    #[Test]
     public function a_combobox_shows_its_disabled_and_error_states(): void
     {
         $this->withViewErrors([]);
@@ -254,12 +297,12 @@ class UiComponentTest extends TestCase
         $this->assertArrayHasKey('value', $all[0]);
         $this->assertArrayHasKey('label', $all[0]);
 
-        $filtered = $this->getJson(route('ui.catalog.options', ['q' => '山']))->assertOk()->json();
+        $filtered = $this->getJson(route('ui.catalog.options', ['q' => 'アオイ']))->assertOk()->json();
 
         $this->assertNotEmpty($filtered);
 
         foreach ($filtered as $item) {
-            $this->assertStringContainsString('山', $item['label']);
+            $this->assertStringContainsString('アオイ', $item['label']);
         }
     }
 

@@ -18,7 +18,8 @@
     </head>
 
     <body class="bg-gray-100 font-sans antialiased dark:bg-gray-900">
-        <div class="mx-auto max-w-5xl space-y-10 px-4 py-10 sm:px-6">
+        {{-- ページ全体を Alpine のスコープにする（$dispatch を使うボタンのため） --}}
+        <div x-data class="mx-auto max-w-5xl space-y-10 px-4 py-10 sm:px-6">
 
             <header class="space-y-2">
                 <p class="text-xs font-semibold uppercase tracking-wide text-primary-text">Design System</p>
@@ -71,7 +72,8 @@
                     <x-form.number name="catalog_amount" label="金額（税込）" :value="11000"
                                    min="0" help="円単位の整数で入力します。" />
 
-                    <x-form.date name="catalog_date" label="予定日" :value="now()->toDateString()" />
+                    <x-form.date name="catalog_date" label="予定日" :value="now()->toDateString()"
+                                 help="共通のカレンダー部品（x-datepicker）を使っています。" />
 
                     <x-form.select name="catalog_status" label="ステータス" required
                                    :options="['open' => '進行中', 'won' => '受注', 'lost' => '失注']"
@@ -99,17 +101,60 @@
                 </div>
             </x-card>
 
+            {{-- カレンダー --}}
+            <x-card title="カレンダー（日付選択）" subtitle="ブラウザ標準の date input ではなく共通部品">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">基本</span>
+                        <x-datepicker name="catalog_picker" :value="now()->toDateString()" class="mt-1" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            今日は枠線、選択日は塗りつぶし。土曜は青、日曜は赤。
+                        </p>
+                    </div>
+
+                    <div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">選択できる範囲を制限</span>
+                        <x-datepicker name="catalog_picker_limited"
+                                      :min="now()->startOfMonth()->toDateString()"
+                                      :max="now()->endOfMonth()->toDateString()" class="mt-1" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            今月以外は選べません（min / max）。
+                        </p>
+                    </div>
+
+                    <div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">未選択の状態</span>
+                        <x-datepicker name="catalog_picker_empty" class="mt-1" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            直接入力もできます（2026/08/24・2026-08-24・20260824）。
+                        </p>
+                    </div>
+
+                    <div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">無効</span>
+                        <x-datepicker name="catalog_picker_disabled" :value="now()->toDateString()" disabled class="mt-1" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            祝日のハイライトは HolidayProvider を差し替えると有効になります（既定は祝日なし）。
+                        </p>
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    キーボード：↑↓←→ で日を移動、PageUp / PageDown で月送り、Enter で決定、Esc で閉じる。
+                </p>
+            </x-card>
+
             {{-- コンボボックス --}}
             <x-card title="コンボボックス" subtitle="入力で候補を絞る。静的モードと非同期モードの両対応">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <x-form.combobox name="catalog_customer" label="顧客（静的モード）"
                                      :options="$customers" selected="3"
-                                     help="渡した候補をブラウザ側で絞り込みます。↑↓ で移動、Enter で選択、Esc で閉じる。" />
+                                     help="「あおい」と入力すると「アオイ商事」に当たります（ひらがな/カタカナ・全角半角・大文字小文字を無視）。" />
 
-                    <x-form.combobox name="catalog_prefecture" label="都道府県（非同期モード）"
+                    <x-form.combobox name="catalog_prefecture" label="取引先（非同期モード）"
                                      :source="route('ui.catalog.options')"
-                                     placeholder="「山」などと入力"
-                                     help="入力のたびにサーバへ問い合わせます（250ms のデバウンスつき）。" />
+                                     placeholder="「あおい」などと入力"
+                                     help="サーバ側でも同じ正規化を使うので、かな入力でも漢字の候補に当たります（250ms のデバウンスつき）。" />
 
                     <x-form.combobox name="catalog_combo_disabled" label="無効"
                                      :options="$customers" selected="1" disabled />
@@ -301,27 +346,43 @@
             </x-card>
 
             {{-- トースト --}}
-            <x-card title="トースト通知" subtitle="数秒で自動的に消える。画面右下に出る">
+            <x-card title="トースト通知" subtitle="種別ごとに表示され、数秒で自動的に消える（画面右下）">
                 <div class="flex flex-wrap gap-3">
                     <x-button type="button" variant="secondary"
                               x-on:click="$dispatch('toast', { type: 'success', message: '保存しました。' })">
-                        成功を出す
+                        成功
                     </x-button>
 
                     <x-button type="button" variant="secondary"
                               x-on:click="$dispatch('toast', { type: 'danger', message: '保存に失敗しました。' })">
-                        エラーを出す
+                        エラー
                     </x-button>
 
                     <x-button type="button" variant="secondary"
                               x-on:click="$dispatch('toast', { type: 'info', message: 'CSV の作成を開始しました。' })">
-                        情報を出す
+                        情報
+                    </x-button>
+
+                    <x-button type="button" variant="secondary"
+                              x-on:click="$dispatch('toast', { type: 'warning', message: '在庫が残りわずかです。' })">
+                        注意
+                    </x-button>
+
+                    <x-button type="button" variant="ghost"
+                              x-on:click="['success', 'danger', 'info'].forEach((type, index) => $dispatch('toast', { type, message: `まとめて表示 ${index + 1} 件目` }))">
+                        3 件まとめて出す
+                    </x-button>
+
+                    <x-button type="button" variant="ghost" onclick="window.toast('Alpine を使わずに出したトースト', 'info')">
+                        素の JS から出す
                     </x-button>
                 </div>
 
-                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                    サーバ側からは <code>return redirect()-&gt;route(...)-&gt;with('toast', Toast::success('保存しました'));</code>
-                </p>
+                <div class="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p>サーバ側（リダイレクト後に表示）：<code>return back()-&gt;with('toast', Toast::success('保存しました'));</code></p>
+                    <p>画面側（Alpine）：<code>$dispatch('toast', { type: 'success', message: '…' })</code></p>
+                    <p>「編集フォームを開く」→ 正しい値で保存すると、リダイレクト後に成功トーストが出ます。</p>
+                </div>
             </x-card>
 
             {{-- タブ --}}

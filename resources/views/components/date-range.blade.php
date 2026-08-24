@@ -154,17 +154,17 @@
                     </p>
 
                     <div class="space-y-2">
-                        <label class="block">
+                        <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">開始日</span>
-                            <input type="date" x-model="from" @change="onCustomInput()"
-                                   class="mt-0.5 block w-full rounded-md border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-                        </label>
+                            <x-datepicker x-model="from" size="sm" class="mt-0.5"
+                                          @datepicker-changed="onCustomInput()" />
+                        </div>
 
-                        <label class="block">
+                        <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">終了日</span>
-                            <input type="date" x-model="to" @change="onCustomInput()"
-                                   class="mt-0.5 block w-full rounded-md border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-                        </label>
+                            <x-datepicker x-model="to" size="sm" class="mt-0.5"
+                                          @datepicker-changed="onCustomInput()" />
+                        </div>
                     </div>
 
                     <div class="mt-3 flex items-center justify-between gap-2">

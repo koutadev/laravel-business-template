@@ -13,8 +13,6 @@
 ])
 
 @php
-    use App\Support\Ui\Input;
-    use App\Support\Ui\Size;
     use Illuminate\Support\Carbon;
 
     $inputId = $id ?? $name;
@@ -29,14 +27,14 @@
 
 {{-- 日付入力 --}}
 <x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help" :messages="$messages">
-    <input type="date"
-           id="{{ $inputId }}"
-           name="{{ $name }}"
-           value="{{ old($name, $dateValue) }}"
-           @if ($min !== null) min="{{ $min }}" @endif
-           @if ($max !== null) max="{{ $max }}" @endif
-           @required($required)
-           @disabled($disabled)
-           @if ($hasError) aria-invalid="true" @endif
-           {{ $attributes->merge(['class' => Input::classes(Size::resolve($size), $hasError)]) }}>
+    <x-datepicker :name="$name"
+                  :id="$inputId"
+                  :value="old($name, $dateValue)"
+                  :size="$size"
+                  :required="$required"
+                  :disabled="$disabled"
+                  :min="$min"
+                  :max="$max"
+                  :has-error="$hasError"
+                  {{ $attributes }} />
 </x-form.field>

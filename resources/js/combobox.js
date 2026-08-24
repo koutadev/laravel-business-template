@@ -8,6 +8,8 @@
  * 非同期モードのエンドポイントは `?q=<入力文字>` を受け取り、
  * [{ value, label }] の配列（または { data: [...] }）を返す。
  */
+import normalizeSearchText from './search-text';
+
 const DEBOUNCE_MS = 250;
 
 export default function combobox(config = {}) {
@@ -82,14 +84,22 @@ export default function combobox(config = {}) {
             this.filtered = this.filter(this.options, this.query);
         },
 
+        /**
+         * ひらがな・カタカナ・全角半角・大文字小文字の違いを無視して絞り込む。
+         * 候補側の正規化済み文字列(search)はサーバ側で作って渡している。
+         */
         filter(options, query) {
-            const needle = (query ?? '').trim().toLowerCase();
+            const needle = normalizeSearchText(query);
 
             if (needle === '') {
                 return options;
             }
 
-            return options.filter((option) => String(option.label).toLowerCase().includes(needle));
+            return options.filter((option) => {
+                const haystack = option.search ?? normalizeSearchText(option.label);
+
+                return haystack.includes(needle);
+            });
         },
 
         debouncedFetch() {

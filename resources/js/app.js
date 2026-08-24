@@ -3,6 +3,7 @@ import Alpine from 'alpinejs';
 import appShell from './app-shell';
 import combobox from './combobox';
 import dateRange from './date-range';
+import datepicker from './datepicker';
 import modal from './modal';
 import registerToastStore from './toast';
 import './charts';
@@ -17,6 +18,9 @@ Alpine.data('combobox', combobox);
 
 // 日付範囲ピッカー（相対プリセット + カスタム期間）
 Alpine.data('dateRange', dateRange);
+
+// カレンダー（日付選択）
+Alpine.data('datepicker', datepicker);
 
 // モーダル（フォーカストラップつき）
 Alpine.data('modal', modal);

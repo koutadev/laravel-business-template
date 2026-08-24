@@ -14,6 +14,7 @@ use App\Http\Controllers\UserController;
 use App\Support\DataTable\Column;
 use App\Support\Routing\MasterRoutes;
 use App\Support\Ui\DateRange;
+use App\Support\Ui\SearchText;
 use App\Support\Ui\Toast;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -170,17 +171,19 @@ if (! app()->environment('production')) {
 
     // コンボボックスの非同期モードの見本(?q= で絞り込み、[{value,label}] を返す)
     Route::get('/_ui/options', function () {
-        $prefectures = ['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県', '茨城県', '栃木県', '群馬県',
-            '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
-            '岐阜県', '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
-            '鳥取県', '島根県', '岡山県', '広島県', '山口県', '徳島県', '香川県', '愛媛県', '高知県', '福岡県',
-            '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'];
+        // ひらがなで入力してもカタカナの候補に当たることを確かめられる並び
+        $companies = ['アオイ商事', 'イロハ物産', 'ウエノ電機', 'エダサキ工業', 'オオトリ製作所',
+            'カシワギシステムズ', 'キタムラ運輸', 'クスノキ設計', 'ケヤキ食品', 'コウヨウ商会',
+            'サカタ精機', 'シラハマ物流', 'スミレ印刷', 'セノオ建設', 'ソラチ農産',
+            'タチバナ電子', 'チトセ工房', 'ツバキ製薬', 'テラオカ通信', 'トウカイ商事',
+            'ナガレヤマ技研', 'ニシキ製作', 'ヌマタ運送', 'ネギシ工業', 'ノザワ商店'];
 
         $query = trim((string) request('q'));
 
-        return collect($prefectures)
+        return collect($companies)
             ->when($query !== '', fn ($items) => $items->filter(
-                fn (string $name): bool => str_contains($name, $query)
+                // 入力と候補の両方を同じ形に正規化してから比較する
+                fn (string $name): bool => SearchText::matches($name, $query)
             ))
             ->take(20)
             ->values()

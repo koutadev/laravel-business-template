@@ -36,4 +36,9 @@ export default function registerToastStore(Alpine) {
     window.addEventListener('toast', (event) => {
         Alpine.store('toast').push(event.detail ?? {});
     });
+
+    // Alpine のスコープが無い場所（素の onclick など）からも呼べるようにしておく
+    window.toast = (message, type = 'info') => {
+        Alpine.store('toast').push({ message, type });
+    };
 }

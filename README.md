@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 152 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 164 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 152 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 164 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -525,6 +525,7 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 | カード | `<x-card title="…" subtitle="…">…<x-slot name="actions">…</x-slot></x-card>` |
 | KPI カード | `<x-kpi-card label="今月の受注" :value="2334700" unit="円" href="…" />` |
 | テーブル | `<x-table :columns="$columns" :sort="…" :sort-url="…">` ＋ `<x-table.row>` / `<x-table.cell>` |
+| カレンダー | `<x-datepicker name="closed_on" :value="$deal->closed_on" />` |
 | 日付範囲 | `<x-date-range name="closed" label="期間" basis-label="予定クローズ日" />` |
 | モーダル | `<x-modal name="employee-detail" title="社員の詳細">…</x-modal>` |
 | 確認ダイアログ | `<x-confirm-dialog name="delete-employee" :action="…" method="DELETE">…</x-confirm-dialog>` |
@@ -550,6 +551,17 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 非同期モードのエンドポイントは `?q=<入力文字>` を受け取り、`[{ "value": …, "label": … }]`
 （または `{ "data": [...] }`）を返します。入力は 250ms デバウンスされ、
 読み込み中・取得失敗・該当なしはそれぞれ候補欄に表示されます。
+
+**ひらがな・カタカナのどちらで入力しても一致します。**「あおい」で「アオイ商事」が見つかります。
+入力と候補の両方を同じ形（全角半角の統一 → カタカナをひらがなへ → 英字を小文字へ）に
+正規化してから比較しており、同じ規則を PHP（`App\Support\Ui\SearchText`）と
+JS（`resources/js/search-text.js`）の両方に置いてあります。
+非同期モードのエンドポイントでも `SearchText::matches()` を使えば同じ挙動になります。
+
+```php
+SearchText::matches('アオイ商事', 'あおい');   // true
+SearchText::matches('アオイ商事', 'ｱｵｲ');      // true
+```
 
 | 操作 | 動き |
 | --- | --- |
@@ -591,6 +603,40 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 - **空状態**：`:is-empty` と `empty="…"`。`<x-data-table>` は検索条件の有無でメッセージを出し分けます
 - **ローディング**：`loading` でスケルトン行（`prefers-reduced-motion` では点滅しません）
 - ゼブラ・ホバーはテーマ色に連動します
+
+### カレンダー（日付選択）
+
+日付の入力はブラウザ標準の `input[type=date]` ではなく、共通のカレンダー部品を使います
+（ブラウザごとの見た目のばらつきをなくすため。依存ライブラリは増やさず Blade + Alpine のみ）。
+
+```blade
+<x-datepicker name="expected_close_date" :value="$deal->expected_close_date" />
+
+{{-- 1-B の日付フィールドは中でこれを使う --}}
+<x-form.date name="expected_close_date" label="予定クローズ日" required />
+```
+
+- 月表示のカレンダー。**今日は枠線、選択日は塗りつぶし**、土曜は青・日曜は赤
+- 年・月はプルダウンで一気に移動、前月／翌月ボタンつき
+- 入力欄に直接打ち込めます（`2026/08/24` / `2026-08-24` / `20260824`）
+- `min` / `max` で選べる範囲を制限
+- キーボード：↑↓←→ で日を移動、PageUp / PageDown で月送り、Enter で決定、Esc で閉じる
+- `role="dialog"` / `role="grid"` / `role="gridcell"` / `aria-selected`、`prefers-reduced-motion` 対応
+- 他の Alpine 部品からは `x-model` で値を共有できます（日付範囲ピッカーの開始日・終了日がこの形）
+
+**祝日のハイライト**は拡張点だけ用意してあります。`HolidayProvider` を差し替えると、
+カレンダーの該当日に印がつき、`aria-label` にも名称が入ります（既定は祝日なし）。
+
+```php
+// AppServiceProvider
+$this->app->bind(HolidayProvider::class, JapaneseHolidayProvider::class);
+
+interface HolidayProvider
+{
+    /** @return array<string, string> [Y-m-d => 名称] */
+    public function between(CarbonInterface $from, CarbonInterface $to): array;
+}
+```
 
 ### 日付範囲ピッカー
 
@@ -957,7 +1003,8 @@ config/
 
 resources/
 ├── css/app.css                 # Tailwind 4 + テーマトークン
-├── js/{app.js,app-shell.js,toast.js,charts.js}  # Alpine.js（左ナビ・トースト）/ Chart.js
+├── js/                         # Alpine.js の部品（左ナビ・トースト・コンボボックス・
+│                               # カレンダー・日付範囲・モーダル）/ Chart.js
 └── views/
     ├── components/             # button / form/ / badge / toast / card など共通 UI 部品
     │                           # + app-sidebar / app-topbar / breadcrumbs / data-table
@@ -969,7 +1016,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 152 件
+tests/                          # 164 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

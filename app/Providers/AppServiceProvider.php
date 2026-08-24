@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\ActivityLog;
 use App\Models\BaseModel;
+use App\Support\Ui\Contracts\HolidayProvider;
+use App\Support\Ui\NullHolidayProvider;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -20,7 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // カレンダーの「特別な日(祝日など)」。既定は何も返さない実装。
+        // 祝日をハイライトしたくなったら、ここを差し替える。
+        $this->app->bind(HolidayProvider::class, NullHolidayProvider::class);
     }
 
     /**
