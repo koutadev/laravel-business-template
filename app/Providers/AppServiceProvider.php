@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerBlueprintMacros();
         $this->configureModels();
         $this->registerAuthenticationLogging();
+        $this->configurePagination();
     }
 
     /**
@@ -58,6 +60,17 @@ class AppServiceProvider extends ServiceProvider
             $this->boolean('is_active')->default(true)->index();
             $this->auditColumns();
         });
+    }
+
+    /**
+     * ページネーションの見た目を共通部品に差し替える。
+     *
+     * これで $items->links() はすべて resources/views/pagination/ の見た目になる。
+     */
+    protected function configurePagination(): void
+    {
+        Paginator::defaultView('pagination.app');
+        Paginator::defaultSimpleView('pagination.simple');
     }
 
     protected function configureModels(): void

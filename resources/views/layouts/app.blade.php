@@ -47,6 +47,8 @@
                     {{ $slot }}
                 </main>
             </div>
+
+            <x-toast-container />
         </div>
     </body>
 </html>

@@ -21,7 +21,12 @@
     };
 @endphp
 
-<svg {{ $attributes->merge(['class' => 'h-5 w-5', 'aria-hidden' => 'true']) }}
+@php
+    // 呼び出し側でサイズ指定(h-4 など)があれば、既定サイズは付けない
+    $hasSize = str_contains((string) $attributes->get('class'), 'h-');
+@endphp
+
+<svg {{ $attributes->merge(['class' => $hasSize ? '' : 'h-5 w-5', 'aria-hidden' => 'true']) }}
      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
     @foreach ($paths as $path)
         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}" />

@@ -27,11 +27,12 @@ open http://localhost:8080
 5. [技術選定と設計判断](#技術選定と設計判断)
 6. [設計のハイライト](#設計のハイライト)
 7. [画面レイアウト（左サイドナビ）](#画面レイアウト左サイドナビ)
-8. [テーマを差し替える](#テーマを差し替える)
-9. [新しいマスタ画面を追加する](#新しいマスタ画面を追加する)
-10. [拡張の指針](#拡張の指針)
-11. [ディレクトリ構成](#ディレクトリ構成)
-12. [トラブルシューティング](#トラブルシューティング)
+8. [UI 部品（デザインシステム）](#ui-部品デザインシステム)
+9. [テーマを差し替える](#テーマを差し替える)
+10. [新しいマスタ画面を追加する](#新しいマスタ画面を追加する)
+11. [拡張の指針](#拡張の指針)
+12. [ディレクトリ構成](#ディレクトリ構成)
+13. [トラブルシューティング](#トラブルシューティング)
 
 ---
 
@@ -56,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 107 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 120 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -76,9 +77,10 @@ open http://localhost:8080
 | **監査ログ** | 作成・更新・削除・復元・ログイン / ログアウト | 1 テーブルに集約。変更内容を JSON で保持 |
 | **ダッシュボード** | KPI カード + グラフ + 最近の操作 | Chart.js。中身はコントローラから配列で差し替え |
 | **画面レイアウト** | 左サイドナビ（折りたたみ・セクション見出し・現在地ハイライト・パンくず） | メニューの定義は 1 か所。権限で自動的に出し分け、パンくずも自動生成 |
+| **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 107 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 120 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -493,6 +495,80 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 
 ---
 
+## UI 部品（デザインシステム）
+
+画面ごとに見た目を書かず、共通の Blade コンポーネントを組み合わせて作ります。
+配色はすべてテーマ（`.env` の `THEME_PRIMARY`）に連動します。
+
+### カタログページ
+
+**<http://localhost:8080/_ui>** に、全部品の見た目と状態（無効・ローディング・エラーなど）を並べたページがあります。
+新しい部品を足したらここにも追加してください（本番環境では登録されません）。
+
+### 部品一覧
+
+| 部品 | 使い方 |
+| --- | --- |
+| ボタン | `<x-button variant="primary" size="md" :loading="$saving">保存</x-button>`（`href` を渡すとリンクになる） |
+| テキスト | `<x-form.text name="title" label="件名" required help="30 文字まで" />` |
+| 数値 | `<x-form.number name="amount" label="金額" :value="11000" min="0" />` |
+| 日付 | `<x-form.date name="closed_on" label="予定日" :value="$deal->closed_on" />` |
+| セレクト | `<x-form.select name="status" label="状態" :options="$options" :selected="$current" placeholder="選択" />` |
+| チェック | `<x-form.checkbox name="is_active" label="有効" :checked="$record->is_active" />` |
+| ラジオ | `<x-form.radio name="plan" label="プラン" :options="$options" :selected="$current" />` |
+| バッジ | `<x-badge tone="success" dot>受注</x-badge>` |
+| トースト | `->with('toast', Toast::success('保存しました'))` / `$dispatch('toast', {...})` |
+| ページネーション | `<x-pagination :paginator="$items" />`（`$items->links()` も同じ見た目） |
+| タブ | `<x-tabs :tabs="[...]"><x-tab-panel name="…">…</x-tab-panel></x-tabs>` |
+| カード | `<x-card title="…" subtitle="…">…<x-slot name="actions">…</x-slot></x-card>` |
+| KPI カード | `<x-kpi-card label="今月の受注" :value="2334700" unit="円" href="…" />` |
+| アイコン | `<x-icon name="employees" class="h-4 w-4" />` |
+
+入力部品はラベル・必須マーク・ヘルプ・**バリデーションエラー**・`old()` の復元まで面倒を見ます。
+`name` からエラーを自動で引くため、画面側で `$errors` を触る必要はありません。
+
+### 見た目の指定は enum で
+
+色やサイズは文字列ではなく enum で定義しています（`app/Support/Ui/`）。
+知らない値を渡しても既定にフォールバックするので、画面が壊れません。
+
+| enum | 値 |
+| --- | --- |
+| `Variant` | `primary` / `secondary` / `danger` / `ghost` |
+| `Size` | `sm` / `md` / `lg` |
+| `Tone` | `neutral` / `primary` / `success` / `warning` / `danger` / `info` |
+
+```blade
+{{-- 文字列でも enum でも渡せる --}}
+<x-button :variant="\App\Support\Ui\Variant::Danger" size="sm">削除</x-button>
+```
+
+### トースト通知
+
+レイアウトに置いてある `<x-toast-container />` が受け口です。
+
+```php
+// サーバ側（リダイレクト時）
+return redirect()->route('masters.employees.index')
+    ->with(Toast::SESSION_KEY, Toast::success('社員を登録しました。'));
+```
+
+```blade
+{{-- 画面側（Alpine のイベント） --}}
+<x-button x-on:click="$dispatch('toast', { type: 'info', message: 'CSV を作成しています' })">出力</x-button>
+```
+
+> 既存画面が使っている `session('status')` の**インライン通知**（`<x-flash />`）はそのまま残しています。
+> 画面の刷新に合わせて順次トーストへ寄せる想定です。
+
+### 旧部品との関係
+
+`<x-primary-button>` / `<x-secondary-button>` / `<x-danger-button>` は
+`<x-button>` を呼ぶ薄いラッパとして残してあります（既存画面をそのまま動かすため）。
+新しい画面では `<x-button variant="…">` を使ってください。
+
+---
+
 ## テーマを差し替える
 
 顧客ごと・システムごとに見た目を変えるための差し替え口です。
@@ -720,6 +796,7 @@ app/
 │   ├── Routing/MasterRoutes.php
 │   └── Theme/Theme.php         # テーマ差し替え口
 ├── Support/Navigation/         # 左サイドナビの定義（NavigationMenu / NavSection / NavItem）
+├── Support/Ui/                 # UI 部品の見た目の定義（Variant / Size / Tone / Toast）
 └── Tables/                     # 各マスタの一覧定義
 
 config/
@@ -728,16 +805,19 @@ config/
 
 resources/
 ├── css/app.css                 # Tailwind 4 + テーマトークン
-├── js/{app.js,app-shell.js,charts.js}  # Alpine.js（左ナビの開閉）/ Chart.js
+├── js/{app.js,app-shell.js,toast.js,charts.js}  # Alpine.js（左ナビ・トースト）/ Chart.js
 └── views/
-    ├── components/             # app-sidebar / app-topbar / breadcrumbs / data-table など共通部品
+    ├── components/             # button / form/ / badge / toast / card など共通 UI 部品
+    │                           # + app-sidebar / app-topbar / breadcrumbs / data-table
+    ├── pagination/             # ページネーションの見た目（links() の差し替え先）
+    ├── ui/catalog.blade.php    # UI 部品カタログ（/_ui）
     ├── masters/                # 各マスタ画面（simple/ は 3 サブマスタで共有）
     ├── partials/theme.blade.php
     └── users/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 107 件
+tests/                          # 120 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

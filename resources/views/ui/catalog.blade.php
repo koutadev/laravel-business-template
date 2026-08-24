@@ -1,0 +1,190 @@
+@php
+    use App\Support\Ui\Size;
+    use App\Support\Ui\Tone;
+    use App\Support\Ui\Variant;
+@endphp
+
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
+        <title>UI コンポーネントカタログ — {{ \App\Support\Theme\Theme::name() }}</title>
+
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.theme')
+    </head>
+
+    <body class="bg-gray-100 font-sans antialiased dark:bg-gray-900">
+        <div class="mx-auto max-w-5xl space-y-10 px-4 py-10 sm:px-6">
+
+            <header class="space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-primary-text">Design System</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">UI コンポーネントカタログ</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    共通基盤の再利用部品を一覧で確認するページ（開発・デモ用）。
+                    配色は <code class="rounded bg-gray-200 px-1 text-xs dark:bg-gray-700">.env</code> の
+                    <code class="rounded bg-gray-200 px-1 text-xs dark:bg-gray-700">THEME_PRIMARY</code> に連動します（現在:
+                    <span class="inline-flex items-center gap-1">
+                        <span class="inline-block h-3 w-3 rounded-full bg-primary align-middle"></span>
+                        <code class="text-xs">{{ config('theme.colors.primary') }}</code>
+                    </span>）。
+                </p>
+            </header>
+
+            {{-- ボタン --}}
+            <x-card title="ボタン" subtitle="variant × size / 無効 / ローディング / アイコン / リンク">
+                <div class="space-y-6">
+                    @foreach (Variant::cases() as $variant)
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="w-24 shrink-0 text-xs text-gray-500 dark:text-gray-400">{{ $variant->value }}</span>
+
+                            @foreach (Size::cases() as $size)
+                                <x-button :variant="$variant" :size="$size" type="button">{{ $size->label() }}</x-button>
+                            @endforeach
+
+                            <x-button :variant="$variant" type="button" disabled>無効</x-button>
+                            <x-button :variant="$variant" type="button" loading>保存中</x-button>
+                        </div>
+                    @endforeach
+
+                    <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                        <span class="w-24 shrink-0 text-xs text-gray-500 dark:text-gray-400">応用</span>
+                        <x-button icon="employees" type="button">アイコン付き</x-button>
+                        <x-button variant="secondary" href="#catalog-form">リンクとして</x-button>
+                        <x-button variant="ghost" size="sm" icon="close" type="button">閉じる</x-button>
+                    </div>
+                </div>
+            </x-card>
+
+            {{-- フォーム部品 --}}
+            <x-card title="フォーム部品" subtitle="ラベル・必須マーク・ヘルプ・エラー表示" id="catalog-form">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <x-form.text name="catalog_name" label="氏名" required
+                                 value="山田 太郎" help="姓と名の間は空白で区切ります。" />
+
+                    <x-form.text name="catalog_email" label="メールアドレス" type="email"
+                                 placeholder="you@example.com" />
+
+                    <x-form.number name="catalog_amount" label="金額（税込）" :value="11000"
+                                   min="0" help="円単位の整数で入力します。" />
+
+                    <x-form.date name="catalog_date" label="予定日" :value="now()->toDateString()" />
+
+                    <x-form.select name="catalog_status" label="ステータス" required
+                                   :options="['open' => '進行中', 'won' => '受注', 'lost' => '失注']"
+                                   selected="open" placeholder="選択してください" />
+
+                    <x-form.text name="catalog_disabled" label="無効な入力欄" value="編集できません" disabled />
+
+                    <x-form.radio name="catalog_plan" label="プラン"
+                                  :options="['standard' => 'スタンダード', 'premium' => 'プレミアム']"
+                                  selected="standard" />
+
+                    <x-form.checkbox name="catalog_active" label="有効" :checked="true"
+                                     help="無効にすると選択肢に出なくなります。" />
+
+                    {{-- エラー表示の例(メッセージを直接渡す) --}}
+                    <div class="space-y-1 sm:col-span-2">
+                        <x-form.field label="エラーがある入力欄" for="catalog_error"
+                                      :messages="['この項目は必須です。', '100 文字以内で入力してください。']">
+                            <input type="text" id="catalog_error" value=""
+                                   class="{{ \App\Support\Ui\Input::classes(Size::Md, hasError: true) }}"
+                                   aria-invalid="true">
+                        </x-form.field>
+                    </div>
+                </div>
+            </x-card>
+
+            {{-- バッジ --}}
+            <x-card title="バッジ / ステータスチップ" subtitle="意味（tone）で指定する">
+                <div class="flex flex-wrap items-center gap-3">
+                    @foreach (Tone::cases() as $tone)
+                        <x-badge :tone="$tone">{{ $tone->label() }}</x-badge>
+                    @endforeach
+                </div>
+
+                <div class="mt-4 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                    @foreach (Tone::cases() as $tone)
+                        <x-badge :tone="$tone" dot>{{ $tone->label() }}</x-badge>
+                    @endforeach
+                </div>
+            </x-card>
+
+            {{-- トースト --}}
+            <x-card title="トースト通知" subtitle="数秒で自動的に消える。画面右下に出る">
+                <div class="flex flex-wrap gap-3">
+                    <x-button type="button" variant="secondary"
+                              x-on:click="$dispatch('toast', { type: 'success', message: '保存しました。' })">
+                        成功を出す
+                    </x-button>
+
+                    <x-button type="button" variant="secondary"
+                              x-on:click="$dispatch('toast', { type: 'danger', message: '保存に失敗しました。' })">
+                        エラーを出す
+                    </x-button>
+
+                    <x-button type="button" variant="secondary"
+                              x-on:click="$dispatch('toast', { type: 'info', message: 'CSV の作成を開始しました。' })">
+                        情報を出す
+                    </x-button>
+                </div>
+
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    サーバ側からは <code>return redirect()-&gt;route(...)-&gt;with('toast', Toast::success('保存しました'));</code>
+                </p>
+            </x-card>
+
+            {{-- タブ --}}
+            <x-card title="タブ" subtitle="左右キーでも切り替えられる">
+                <x-tabs :tabs="['overview' => '概要', 'detail' => '明細', 'history' => '活動履歴']">
+                    <x-tab-panel name="overview">概要タブの中身。</x-tab-panel>
+                    <x-tab-panel name="detail">明細タブの中身。</x-tab-panel>
+                    <x-tab-panel name="history">活動履歴タブの中身。</x-tab-panel>
+                </x-tabs>
+            </x-card>
+
+            {{-- KPI カード --}}
+            <x-card title="KPI カード" subtitle="href を渡すとカード全体がリンクになる">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <x-kpi-card label="今月の受注（税込）" :value="2334700" unit="円" note="2026年8月に受注した商談" />
+                    <x-kpi-card label="進行中の商談" :value="15" unit="件" note="受注・失注を除く" href="#catalog-form" />
+                    <x-kpi-card label="受注残（税込）" :value="2925900" unit="円" />
+                    <x-kpi-card label="達成率" value="86.4%" note="目標 2,700,000 円に対して" />
+                </div>
+            </x-card>
+
+            {{-- ページネーション --}}
+            <x-card title="ページネーション" subtitle="$items->links() もこの見た目になる">
+                <x-pagination :paginator="$paginator" />
+            </x-card>
+
+            {{-- カード --}}
+            <x-card title="カード" subtitle="見出し・本文・アクション・フッター">
+                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <x-card title="社員マスタ" subtitle="全 32 名">
+                        <x-slot name="actions">
+                            <x-button size="sm" type="button">追加</x-button>
+                        </x-slot>
+
+                        本文をここに書きます。表や説明文をそのまま入れられます。
+
+                        <x-slot name="footer">最終更新 2026/08/24 10:00</x-slot>
+                    </x-card>
+
+                    <x-card>
+                        見出しなしのカード。区切りだけ欲しいときに使います。
+                    </x-card>
+                </div>
+            </x-card>
+
+            <footer class="pb-10 text-xs text-gray-500 dark:text-gray-400">
+                このページは開発・デモ用です（本番環境では表示されません）。今後追加する部品もここに並べていきます。
+            </footer>
+        </div>
+
+        <x-toast-container />
+    </body>
+</html>

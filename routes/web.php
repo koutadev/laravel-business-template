@@ -12,6 +12,7 @@ use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Support\Routing\MasterRoutes;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -81,5 +82,29 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+/*
+|--------------------------------------------------------------------------
+| UI コンポーネントカタログ(開発・デモ用)
+|--------------------------------------------------------------------------
+|
+| 共通部品の見た目と状態を 1 ページで確認するためのページ。
+| 本番環境では登録しない。
+|
+*/
+if (! app()->environment('production')) {
+    Route::get('/_ui', function () {
+        // ページネーションの見た目を確認するためのダミー
+        $paginator = new LengthAwarePaginator(
+            items: range(1, 20),
+            total: 137,
+            perPage: 20,
+            currentPage: 3,
+            options: ['path' => url('/_ui')],
+        );
+
+        return view('ui.catalog', ['paginator' => $paginator]);
+    })->name('ui.catalog');
+}
 
 require __DIR__.'/auth.php';
