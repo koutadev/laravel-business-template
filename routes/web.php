@@ -5,6 +5,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Masters\DepartmentController;
 use App\Http\Controllers\Masters\EmployeeController;
+use App\Http\Controllers\Masters\MasterHubController;
 use App\Http\Controllers\Masters\PartnerController;
 use App\Http\Controllers\Masters\PositionController;
 use App\Http\Controllers\Masters\ProductCategoryController;
@@ -62,6 +63,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- 共通マスタ -------------------------------------------------------
     // 一覧 / CSV は master.view、登録・編集・削除・復元は master.manage が必要
     Route::prefix('masters')->name('masters.')->group(function () {
+        // 各マスタへの入口(ハブ)
+        Route::get('/', [MasterHubController::class, 'index'])
+            ->middleware('permission:'.PermissionName::MasterView->value)
+            ->name('index');
+
         MasterRoutes::register('employees', EmployeeController::class, 'employees');
         MasterRoutes::register('partners', PartnerController::class, 'partners');
         MasterRoutes::register('products', ProductController::class, 'products');

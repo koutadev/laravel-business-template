@@ -21,7 +21,7 @@ class NavSection
     ) {}
 
     /**
-     * 権限で絞った項目。
+     * ナビに出す項目(権限で絞ったうえで、hidden のものを除く)。
      *
      * @return list<NavItem>
      */
@@ -29,8 +29,16 @@ class NavSection
     {
         return array_values(array_filter(
             $this->items,
-            static fn (NavItem $item): bool => $item->isVisibleTo($user),
+            static fn (NavItem $item): bool => ! $item->hidden && $item->isVisibleTo($user),
         ));
+    }
+
+    /**
+     * このセクションの入口(パンくずのリンク先に使う)。
+     */
+    public function entryItem(?User $user): ?NavItem
+    {
+        return $this->visibleItems($user)[0] ?? null;
     }
 
     public function hasHeading(): bool

@@ -20,6 +20,7 @@ class NavItem
      * @param  string  $icon  アイコン名(resources/views/components/icon.blade.php)
      * @param  PermissionName|null  $permission  必要な権限。null なら誰でも見える
      * @param  string|null  $activePattern  現在地とみなすルート名のパターン(既定はルート名そのもの)
+     * @param  bool  $hidden  ナビには出さない(現在地の判定とパンくずには使う)
      */
     public function __construct(
         public readonly string $label,
@@ -27,6 +28,7 @@ class NavItem
         public readonly string $icon = 'square',
         public readonly ?PermissionName $permission = null,
         public readonly ?string $activePattern = null,
+        public readonly bool $hidden = false,
     ) {}
 
     public function url(): string

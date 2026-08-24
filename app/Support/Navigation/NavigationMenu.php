@@ -36,13 +36,16 @@ class NavigationMenu
                 ),
             ]),
 
+            // 個々のマスタはハブ(マスタ管理)から入る。
+            // ナビには出さないが、現在地のハイライトとパンくずのために定義は残す。
             new NavSection('マスタ', [
-                new NavItem('社員', 'masters.employees.index', 'employees', PermissionName::MasterView, 'masters.employees.*'),
-                new NavItem('取引先', 'masters.partners.index', 'partners', PermissionName::MasterView, 'masters.partners.*'),
-                new NavItem('商品', 'masters.products.index', 'products', PermissionName::MasterView, 'masters.products.*'),
-                new NavItem('部署', 'masters.departments.index', 'departments', PermissionName::MasterView, 'masters.departments.*'),
-                new NavItem('役職', 'masters.positions.index', 'positions', PermissionName::MasterView, 'masters.positions.*'),
-                new NavItem('商品分類', 'masters.product-categories.index', 'categories', PermissionName::MasterView, 'masters.product-categories.*'),
+                new NavItem('マスタ管理', 'masters.index', 'masters', PermissionName::MasterView, 'masters.index'),
+                new NavItem('社員', 'masters.employees.index', 'employees', PermissionName::MasterView, 'masters.employees.*', hidden: true),
+                new NavItem('取引先', 'masters.partners.index', 'partners', PermissionName::MasterView, 'masters.partners.*', hidden: true),
+                new NavItem('商品', 'masters.products.index', 'products', PermissionName::MasterView, 'masters.products.*', hidden: true),
+                new NavItem('部署', 'masters.departments.index', 'departments', PermissionName::MasterView, 'masters.departments.*', hidden: true),
+                new NavItem('役職', 'masters.positions.index', 'positions', PermissionName::MasterView, 'masters.positions.*', hidden: true),
+                new NavItem('商品分類', 'masters.product-categories.index', 'categories', PermissionName::MasterView, 'masters.product-categories.*', hidden: true),
             ]),
 
             new NavSection('管理', [
@@ -126,7 +129,13 @@ class NavigationMenu
         $current = $this->currentItem();
 
         if ($section !== null && $section->hasHeading()) {
-            $crumbs[] = ['label' => $section->label, 'url' => null];
+            // セクションの入口(ハブなど)があればリンクにする
+            $entry = $section->entryItem($user);
+
+            $crumbs[] = [
+                'label' => $section->label,
+                'url' => $entry !== null && ! $entry->isActive() ? $entry->url() : null,
+            ];
         }
 
         if ($current !== null && $current !== $home) {

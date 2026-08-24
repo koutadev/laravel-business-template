@@ -37,10 +37,11 @@ class NavigationTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder([
                 'ダッシュボード',
-                'マスタ', '社員', '取引先', '商品', '部署', '役職', '商品分類',
+                'マスタ', 'マスタ管理',
                 '管理', 'ユーザー管理', '操作ログ',
             ])
-            ->assertSee(route('masters.employees.index'))
+            // 個々のマスタはハブ(マスタ管理)から入るので、ナビには出さない
+            ->assertSee(route('masters.index'))
             ->assertSee(route('users.index'))
             ->assertSee('メインメニュー');
     }
@@ -52,7 +53,7 @@ class NavigationTest extends TestCase
         $this->actingAs($this->userWithRole(RoleName::Staff))
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee(route('masters.employees.index'))
+            ->assertSee(route('masters.index'))
             ->assertDontSee(route('users.index'))
             ->assertDontSee(route('activity-logs.index'));
 
@@ -60,7 +61,7 @@ class NavigationTest extends TestCase
         $this->actingAs($this->userWithRole(RoleName::Viewer))
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee(route('masters.partners.index'))
+            ->assertSee(route('masters.index'))
             ->assertDontSee(route('users.index'));
     }
 
@@ -79,7 +80,7 @@ class NavigationTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertDontSee(route('masters.employees.index'));
+            ->assertDontSee(route('masters.index'));
     }
 
     #[Test]

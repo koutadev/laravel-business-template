@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 164 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 172 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -69,7 +69,7 @@ open http://localhost:8080
 | **権限** | ロール 3 種（管理者 / 担当者 / 閲覧者）と 5 種の権限 | spatie/laravel-permission。定義は PHP の enum に一元化 |
 | | メニュー・ボタン・ルートの出し分け | 画面で隠すだけでなくルート側でも必ず検査 |
 | | ユーザー管理画面 | `user.manage` を持つ管理者がロールを付け替え |
-| **共通マスタ** | 社員 / 取引先 / 商品 + サブマスタ（部署 / 役職 / 商品分類） | 業務コードを自動採番（`EMP-0001` 形式） |
+| **共通マスタ** | 社員 / 取引先 / 商品 + サブマスタ（部署 / 役職 / 商品分類） | 業務コードを自動採番（`EMP-0001` 形式）。入口は**マスタ管理ハブ**に集約 |
 | **一覧基盤** | 検索・絞り込み・ページング（20 件）・ソート | 定義クラスを 1 つ書くだけで全機能が揃う |
 | | **検索条件の保持** | 別画面へ移動して戻っても条件が残る（セッション保存） |
 | | CSV エクスポート | UTF-8 BOM 付き。現在の絞り込みを反映し全件をストリーミング |
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 164 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 172 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -455,6 +455,31 @@ Chart.js の設定は PHP 側で組み立て、Blade は `<canvas data-chart="{J
   登録・編集画面（`masters.employees.create` など）も親項目の現在地として扱う
 - **パンくず**：メニューの定義から自動生成（例：ダッシュボード > マスタ > 社員）
 - **アクセシビリティ**：キーボード操作可・`aria-expanded` / `aria-controls`・`prefers-reduced-motion` でアニメーション停止
+
+### マスタ管理ハブ
+
+各マスタへの入口は `/masters` の**ハブ画面**にカードで集約しています。
+サイドナビの「マスタ」からはここに入り、個々のマスタはカードから開きます
+（ナビには個別マスタを出さず、画面が増えても迷わない形にしています）。
+
+カードの内容は [`App\Support\Masters\MasterCatalog`](app/Support/Masters/MasterCatalog.php) が持ちます。
+マスタを増やすときはここに 1 枚足すだけで、ハブに並びます。
+
+```php
+new MasterCard(
+    key: 'tax-rates',
+    label: '税率',
+    description: '消費税の税率。適用開始日で世代管理します。',
+    icon: 'categories',
+    routeName: 'masters.tax-rates',
+    modelClass: TaxRate::class,
+);
+```
+
+- 件数は**全マスタ分を 1 クエリ**で数えます（マスタごとに `count` を投げません）。論理削除された行は含みません
+- ルートが登録されていないカードは自動的に出ません
+- `master.view` があれば「開く」、`master.manage` があれば「新規登録」も表示します
+- 業務システムごとにマスタが違う場合は、`MasterCatalog` を継承してコンテナに差し込みます
 
 ### メニューを増やす・差し替える
 
@@ -993,6 +1018,7 @@ app/
 │   ├── Routing/MasterRoutes.php
 │   └── Theme/Theme.php         # テーマ差し替え口
 ├── Support/Navigation/         # 左サイドナビの定義（NavigationMenu / NavSection / NavItem）
+├── Support/Masters/            # マスタ管理ハブに並べるカードの定義
 ├── Support/Ui/                 # UI 部品の見た目の定義（Variant / Size / Tone / Toast）
 └── Tables/                     # 各マスタの一覧定義
 
@@ -1016,7 +1042,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 164 件
+tests/                          # 172 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```
