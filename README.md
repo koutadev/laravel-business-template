@@ -26,11 +26,12 @@ open http://localhost:8080
 4. [データモデル（ER 図）](#データモデルer-図)
 5. [技術選定と設計判断](#技術選定と設計判断)
 6. [設計のハイライト](#設計のハイライト)
-7. [テーマを差し替える](#テーマを差し替える)
-8. [新しいマスタ画面を追加する](#新しいマスタ画面を追加する)
-9. [拡張の指針](#拡張の指針)
-10. [ディレクトリ構成](#ディレクトリ構成)
-11. [トラブルシューティング](#トラブルシューティング)
+7. [画面レイアウト（左サイドナビ）](#画面レイアウト左サイドナビ)
+8. [テーマを差し替える](#テーマを差し替える)
+9. [新しいマスタ画面を追加する](#新しいマスタ画面を追加する)
+10. [拡張の指針](#拡張の指針)
+11. [ディレクトリ構成](#ディレクトリ構成)
+12. [トラブルシューティング](#トラブルシューティング)
 
 ---
 
@@ -55,7 +56,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 99 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 107 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -74,9 +75,10 @@ open http://localhost:8080
 | **共通仕様** | 論理削除 / 有効フラグ / 作成者・更新者の自動記録 | `BaseModel` を継承するだけで有効 |
 | **監査ログ** | 作成・更新・削除・復元・ログイン / ログアウト | 1 テーブルに集約。変更内容を JSON で保持 |
 | **ダッシュボード** | KPI カード + グラフ + 最近の操作 | Chart.js。中身はコントローラから配列で差し替え |
+| **画面レイアウト** | 左サイドナビ（折りたたみ・セクション見出し・現在地ハイライト・パンくず） | メニューの定義は 1 か所。権限で自動的に出し分け、パンくずも自動生成 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 99 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 107 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -421,6 +423,76 @@ Chart.js の設定は PHP 側で組み立て、Blade は `<canvas data-chart="{J
 
 ---
 
+## 画面レイアウト（左サイドナビ）
+
+全画面は `<x-app-layout>` の中に書くだけで、**左サイドナビ + 上部バー（パンくず・ユーザーメニュー）** の
+レイアウトに載ります。画面側でナビについて書くことは何もありません。
+
+```
+┌────────────┬──────────────────────────────┐
+│ サービス名 │ パンくず            ユーザー ▾ │  ← 上部バー
+├────────────┼──────────────────────────────┤
+│ ダッシュボード │                              │
+│            │                              │
+│ マスタ      │        画面の中身              │
+│  社員       │        （$slot）              │
+│  取引先     │                              │
+│  …         │                              │
+│ 管理        │                              │
+│  ユーザー管理 │                             │
+│  操作ログ    │                             │
+├────────────┤                              │
+│ ◀ 折りたたむ │                             │
+└────────────┴──────────────────────────────┘
+```
+
+- **折りたたみ**：画面幅 lg 以上では、左下のボタンでアイコンだけの幅（4.5rem）に切り替えられる。
+  状態は `localStorage` に保存され、次に開いたときも維持される
+- **レスポンシブ**：lg 未満ではナビを画面外に隠し、上部バーのボタンでオーバーレイ表示（Esc・背景クリックで閉じる）
+- **現在地**：開いている画面の項目をテーマ色でハイライトし、`aria-current="page"` を付ける。
+  登録・編集画面（`masters.employees.create` など）も親項目の現在地として扱う
+- **パンくず**：メニューの定義から自動生成（例：ダッシュボード > マスタ > 社員）
+- **アクセシビリティ**：キーボード操作可・`aria-expanded` / `aria-controls`・`prefers-reduced-motion` でアニメーション停止
+
+### メニューを増やす・差し替える
+
+メニューの定義は [`App\Support\Navigation\NavigationMenu`](app/Support/Navigation/NavigationMenu.php) の
+`sections()` 1 か所にあります。項目を足すときはここに 1 行加えるだけで、権限による出し分けも
+パンくずも自動で追従します。
+
+```php
+new NavSection('営業', [
+    new NavItem('商談', 'deals.index', 'products', PermissionName::MasterView, 'deals.*'),
+]),
+```
+
+| 引数 | 意味 |
+| --- | --- |
+| `label` | メニューに出す名称 |
+| `routeName` | 遷移先のルート名（存在しないルートは自動的に非表示） |
+| `icon` | `resources/views/components/icon.blade.php` のアイコン名 |
+| `permission` | 必要な権限（`PermissionName` の enum。null なら誰でも見える） |
+| `activePattern` | 現在地とみなすルート名のパターン（既定はルート名そのもの） |
+
+業務システムごとにメニューをまるごと差し替える場合は、このクラスを継承して
+サービスプロバイダでコンテナに差し込みます。
+
+```php
+// 例: CRM 側の AppServiceProvider
+$this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
+```
+
+画面固有の見出しをパンくずの末尾に足したいときは、レイアウトにスロットを渡します。
+
+```blade
+<x-app-layout>
+    <x-slot name="breadcrumb">新規登録</x-slot>
+    ...
+</x-app-layout>
+```
+
+---
+
 ## テーマを差し替える
 
 顧客ごと・システムごとに見た目を変えるための差し替え口です。
@@ -647,6 +719,7 @@ app/
 │   ├── Dashboard/              # KPI / グラフの値オブジェクト
 │   ├── Routing/MasterRoutes.php
 │   └── Theme/Theme.php         # テーマ差し替え口
+├── Support/Navigation/         # 左サイドナビの定義（NavigationMenu / NavSection / NavItem）
 └── Tables/                     # 各マスタの一覧定義
 
 config/
@@ -655,16 +728,16 @@ config/
 
 resources/
 ├── css/app.css                 # Tailwind 4 + テーマトークン
-├── js/{app.js,charts.js}       # Alpine.js / Chart.js
+├── js/{app.js,app-shell.js,charts.js}  # Alpine.js（左ナビの開閉）/ Chart.js
 └── views/
-    ├── components/             # data-table / master-index / dashboard など共通部品
+    ├── components/             # app-sidebar / app-topbar / breadcrumbs / data-table など共通部品
     ├── masters/                # 各マスタ画面（simple/ は 3 サブマスタで共有）
     ├── partials/theme.blade.php
     └── users/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 99 件
+tests/                          # 107 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```
