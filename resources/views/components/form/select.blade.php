@@ -9,6 +9,7 @@
     'help' => null,
     'placeholder' => null,
     'id' => null,
+    'messages' => null,
 ])
 
 @php
@@ -16,12 +17,13 @@
     use App\Support\Ui\Size;
 
     $inputId = $id ?? $name;
-    $hasError = $errors->has($name);
+    // messages を明示したときはそちらを優先する(カタログや独自表示用)
+    $hasError = $messages !== null ? $messages !== [] : $errors->has($name);
     $current = old($name, $selected);
 @endphp
 
 {{-- セレクト。options は [値 => ラベル]。 --}}
-<x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help">
+<x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help" :messages="$messages">
     <select id="{{ $inputId }}"
             name="{{ $name }}"
             @required($required)

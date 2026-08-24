@@ -86,15 +86,36 @@
                     <x-form.checkbox name="catalog_active" label="有効" :checked="true"
                                      help="無効にすると選択肢に出なくなります。" />
 
-                    {{-- エラー表示の例(メッセージを直接渡す) --}}
-                    <div class="space-y-1 sm:col-span-2">
-                        <x-form.field label="エラーがある入力欄" for="catalog_error"
-                                      :messages="['この項目は必須です。', '100 文字以内で入力してください。']">
-                            <input type="text" id="catalog_error" value=""
-                                   class="{{ \App\Support\Ui\Input::classes(Size::Md, hasError: true) }}"
-                                   aria-invalid="true">
-                        </x-form.field>
+                    <div class="sm:col-span-2">
+                        <x-form.textarea name="catalog_note" label="メモ" rows="3"
+                                         placeholder="打ち合わせの内容などを記録します" />
                     </div>
+
+                    {{-- エラー表示の例 --}}
+                    <div class="sm:col-span-2">
+                        <x-form.text name="catalog_error" label="エラーがある入力欄" required
+                                     :messages="['この項目は必須です。', '100 文字以内で入力してください。']" />
+                    </div>
+                </div>
+            </x-card>
+
+            {{-- コンボボックス --}}
+            <x-card title="コンボボックス" subtitle="入力で候補を絞る。静的モードと非同期モードの両対応">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <x-form.combobox name="catalog_customer" label="顧客（静的モード）"
+                                     :options="$customers" selected="3"
+                                     help="渡した候補をブラウザ側で絞り込みます。↑↓ で移動、Enter で選択、Esc で閉じる。" />
+
+                    <x-form.combobox name="catalog_prefecture" label="都道府県（非同期モード）"
+                                     :source="route('ui.catalog.options')"
+                                     placeholder="「山」などと入力"
+                                     help="入力のたびにサーバへ問い合わせます（250ms のデバウンスつき）。" />
+
+                    <x-form.combobox name="catalog_combo_disabled" label="無効"
+                                     :options="$customers" selected="1" disabled />
+
+                    <x-form.combobox name="catalog_combo_error" label="エラー" :options="$customers" required
+                                     :messages="['顧客を選択してください。']" />
                 </div>
             </x-card>
 

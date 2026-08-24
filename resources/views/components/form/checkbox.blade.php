@@ -7,6 +7,7 @@
     'disabled' => false,
     'help' => null,
     'id' => null,
+    'messages' => null,
 ])
 
 @php
@@ -18,7 +19,7 @@
 @endphp
 
 {{-- チェックボックス(単体)。ラベルは右側に置く。 --}}
-<x-form.field :name="$name" :help="$help">
+<x-form.field :name="$name" :help="$help" :messages="$messages">
     <label for="{{ $inputId }}" class="inline-flex items-center gap-2">
         <input type="checkbox"
                id="{{ $inputId }}"

@@ -7,6 +7,7 @@
     'disabled' => false,
     'help' => null,
     'inline' => true,
+    'messages' => null,
 ])
 
 @php
@@ -16,7 +17,7 @@
 @endphp
 
 {{-- ラジオ(選択肢のまとまり)。options は [値 => ラベル]。 --}}
-<x-form.field :name="$name" :help="$help">
+<x-form.field :name="$name" :help="$help" :messages="$messages">
     <fieldset>
         @if ($label !== null)
             <legend class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">

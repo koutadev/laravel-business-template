@@ -177,6 +177,93 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_combobox_renders_the_selected_option_and_aria_attributes(): void
+    {
+        $this->withViewErrors([]);
+
+        $html = Blade::render(
+            '<x-form.combobox name="partner_id" label="顧客" :options="$options" selected="2" help="入力で絞り込み" />',
+            ['options' => [1 => 'アオイ商事', 2 => 'イロハ物産']],
+        );
+
+        // 送信されるのは hidden の値、見えているのは検索用の入力欄
+        $this->assertStringContainsString('<input type="hidden" name="partner_id"', $html);
+        $this->assertStringContainsString('role="combobox"', $html);
+        $this->assertStringContainsString('role="listbox"', $html);
+        $this->assertStringContainsString('role="option"', $html);
+        $this->assertStringContainsString('aria-autocomplete="list"', $html);
+        $this->assertStringContainsString('aria-controls="partner_id-listbox"', $html);
+
+        // ラベル・ヘルプ・選択中の値
+        $this->assertStringContainsString('顧客', $html);
+        $this->assertStringContainsString('入力で絞り込み', $html);
+        $this->assertStringContainsString('イロハ物産', $html);
+    }
+
+    #[Test]
+    public function a_combobox_switches_between_static_and_async_modes(): void
+    {
+        $this->withViewErrors([]);
+
+        $static = Blade::render(
+            '<x-form.combobox name="partner_id" :options="$options" />',
+            ['options' => [1 => 'アオイ商事']],
+        );
+        $this->assertStringContainsString('アオイ商事', $static, '静的モードは候補を埋め込む。');
+        $this->assertStringContainsString('source\u0022:null', $static);
+
+        $async = Blade::render('<x-form.combobox name="partner_id" source="/_ui/options" />');
+        $this->assertStringContainsString('data-source="/_ui/options"', $async, '非同期モードは問い合わせ先を持つ。');
+        $this->assertStringContainsString('options\u0022:[]', $async);
+    }
+
+    #[Test]
+    public function a_combobox_shows_its_disabled_and_error_states(): void
+    {
+        $this->withViewErrors([]);
+
+        $disabled = Blade::render('<x-form.combobox name="partner_id" :options="[]" disabled />');
+        $this->assertStringContainsString('disabled', $disabled);
+
+        $errored = Blade::render(
+            '<x-form.combobox name="partner_id" :messages="[\'顧客を選択してください。\']" />'
+        );
+        $this->assertStringContainsString('顧客を選択してください。', $errored);
+        $this->assertStringContainsString('aria-invalid="true"', $errored);
+        $this->assertStringContainsString('border-rose-400', $errored);
+    }
+
+    #[Test]
+    public function a_textarea_renders_its_value(): void
+    {
+        $this->withViewErrors([]);
+
+        $html = Blade::render('<x-form.textarea name="note" label="メモ" rows="4" value="打ち合わせの記録" />');
+
+        $this->assertStringContainsString('<textarea', $html);
+        $this->assertStringContainsString('rows="4"', $html);
+        $this->assertStringContainsString('打ち合わせの記録', $html);
+        $this->assertStringContainsString('メモ', $html);
+    }
+
+    #[Test]
+    public function the_async_option_endpoint_filters_by_the_query(): void
+    {
+        $all = $this->getJson(route('ui.catalog.options'))->assertOk()->json();
+        $this->assertNotEmpty($all);
+        $this->assertArrayHasKey('value', $all[0]);
+        $this->assertArrayHasKey('label', $all[0]);
+
+        $filtered = $this->getJson(route('ui.catalog.options', ['q' => '山']))->assertOk()->json();
+
+        $this->assertNotEmpty($filtered);
+
+        foreach ($filtered as $item) {
+            $this->assertStringContainsString('山', $item['label']);
+        }
+    }
+
+    #[Test]
     public function a_flashed_toast_is_rendered(): void
     {
         session()->put(Toast::SESSION_KEY, Toast::success('保存しました。'));
@@ -203,6 +290,12 @@ class UiComponentTest extends TestCase
             'ページネーション',
             'カード',
         ]);
+
+        // コンボボックス(静的・非同期・無効・エラー)
+        $response->assertSee('コンボボックス')
+            ->assertSee('role="combobox"', false)
+            ->assertSee('顧客を選択してください。')
+            ->assertSee('data-source="'.route('ui.catalog.options').'"', false);
 
         // 状態の見本も出ている
         $response->assertSee('animate-spin', false)

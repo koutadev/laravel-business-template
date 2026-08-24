@@ -9,6 +9,7 @@
     'min' => null,
     'max' => null,
     'id' => null,
+    'messages' => null,
 ])
 
 @php
@@ -17,7 +18,8 @@
     use Illuminate\Support\Carbon;
 
     $inputId = $id ?? $name;
-    $hasError = $errors->has($name);
+    // messages を明示したときはそちらを優先する(カタログや独自表示用)
+    $hasError = $messages !== null ? $messages !== [] : $errors->has($name);
 
     // Carbon を渡しても input[type=date] の形式に整える
     $dateValue = $value instanceof \DateTimeInterface
@@ -26,7 +28,7 @@
 @endphp
 
 {{-- 日付入力 --}}
-<x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help">
+<x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help" :messages="$messages">
     <input type="date"
            id="{{ $inputId }}"
            name="{{ $name }}"

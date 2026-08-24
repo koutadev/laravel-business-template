@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 現在の状態
 
-共通基盤としては**完成**しています。テスト 120 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
+共通基盤としては**完成**しています。テスト 125 件・PHPStan level 5・Pint がすべて通る状態を維持しています。
 
 ---
 
@@ -80,7 +80,7 @@ open http://localhost:8080
 | **UI 部品** | ボタン / フォーム / バッジ / トースト / ページネーション / タブ / カード / KPI カード | 見た目は enum で指定（マジックストリングなし）。カタログページで一覧確認 |
 | **テーマ** | サービス名・ロゴ・配色の切り替え | 設定 1 か所。**アセットの再ビルド不要** |
 | **日本語化** | バリデーション / 認証 / 画面文言 | `lang/ja` に集約 |
-| **品質** | Pint / Larastan(level 5) / PHPUnit 120 件 | GitHub Actions で自動実行 |
+| **品質** | Pint / Larastan(level 5) / PHPUnit 125 件 | GitHub Actions で自動実行 |
 
 ---
 
@@ -516,6 +516,8 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 | セレクト | `<x-form.select name="status" label="状態" :options="$options" :selected="$current" placeholder="選択" />` |
 | チェック | `<x-form.checkbox name="is_active" label="有効" :checked="$record->is_active" />` |
 | ラジオ | `<x-form.radio name="plan" label="プラン" :options="$options" :selected="$current" />` |
+| 複数行 | `<x-form.textarea name="note" label="メモ" rows="3" />` |
+| コンボボックス | `<x-form.combobox name="partner_id" label="顧客" :options="$customers" :selected="$id" />`（入力で候補を絞る） |
 | バッジ | `<x-badge tone="success" dot>受注</x-badge>` |
 | トースト | `->with('toast', Toast::success('保存しました'))` / `$dispatch('toast', {...})` |
 | ページネーション | `<x-pagination :paginator="$items" />`（`$items->links()` も同じ見た目） |
@@ -525,7 +527,38 @@ $this->app->bind(NavigationMenu::class, CrmNavigationMenu::class);
 | アイコン | `<x-icon name="employees" class="h-4 w-4" />` |
 
 入力部品はラベル・必須マーク・ヘルプ・**バリデーションエラー**・`old()` の復元まで面倒を見ます。
-`name` からエラーを自動で引くため、画面側で `$errors` を触る必要はありません。
+`name` からエラーを自動で引くため、画面側で `$errors` を触る必要はありません
+（`:messages="[...]"` を渡せば任意のメッセージも出せます）。
+
+### コンボボックス（インクリメンタル検索）
+
+候補が多い選択（顧客・担当者・商品など）は `<x-form.combobox>` を使います。
+`<x-form.select>` と同じ書き方のまま差し替えられます。
+
+```blade
+{{-- 静的モード: 渡した候補をブラウザ側で絞り込む（数十〜数百件まで） --}}
+<x-form.combobox name="partner_id" label="顧客" :options="$customers" :selected="$deal->partner_id" />
+
+{{-- 非同期モード: 入力に応じてサーバへ問い合わせる（件数が多いとき） --}}
+<x-form.combobox name="partner_id" label="顧客" :source="route('customers.options')" />
+```
+
+非同期モードのエンドポイントは `?q=<入力文字>` を受け取り、`[{ "value": …, "label": … }]`
+（または `{ "data": [...] }`）を返します。入力は 250ms デバウンスされ、
+読み込み中・取得失敗・該当なしはそれぞれ候補欄に表示されます。
+
+| 操作 | 動き |
+| --- | --- |
+| 文字入力 | 候補を絞り込む（静的＝部分一致 / 非同期＝サーバ側の絞り込み） |
+| ↑ ↓ | 候補を移動（端で折り返す） |
+| Home / End | 先頭 / 末尾の候補へ |
+| Enter | ハイライト中の候補を選択 |
+| Esc | 閉じて、選択中の値に戻す |
+| × ボタン | 選択を解除（絞り込みを「すべて」に戻す用途） |
+
+`role="combobox"` / `aria-expanded` / `aria-controls` / `aria-activedescendant` /
+`role="listbox"` / `role="option"` を付けています。選択時には `combobox-selected`
+イベントが飛ぶので、連動する絞り込み（顧客 → その顧客の担当者、など）も組めます。
 
 ### 見た目の指定は enum で
 
@@ -817,7 +850,7 @@ resources/
 
 docker/                         # Dockerfile / nginx / postgres 初期化
 lang/ja/                        # 日本語メッセージ
-tests/                          # 120 件
+tests/                          # 125 件
 .github/workflows/ci.yml
 phpstan.neon / pint.json
 ```

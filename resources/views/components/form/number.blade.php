@@ -10,6 +10,7 @@
     'max' => null,
     'step' => 1,
     'id' => null,
+    'messages' => null,
 ])
 
 @php
@@ -17,11 +18,12 @@
     use App\Support\Ui\Size;
 
     $inputId = $id ?? $name;
-    $hasError = $errors->has($name);
+    // messages を明示したときはそちらを優先する(カタログや独自表示用)
+    $hasError = $messages !== null ? $messages !== [] : $errors->has($name);
 @endphp
 
 {{-- 数値入力。金額・数量など右寄せで扱う。 --}}
-<x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help">
+<x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help" :messages="$messages">
     <input type="number"
            id="{{ $inputId }}"
            name="{{ $name }}"

@@ -2,7 +2,7 @@
     'name',
     'label' => null,
     'value' => null,
-    'type' => 'text',
+    'rows' => 3,
     'size' => 'md',
     'required' => false,
     'disabled' => false,
@@ -21,15 +21,14 @@
     $hasError = $messages !== null ? $messages !== [] : $errors->has($name);
 @endphp
 
-{{-- テキスト入力(type を変えればメール・パスワードなどにも使える) --}}
+{{-- 複数行のテキスト入力 --}}
 <x-form.field :name="$name" :label="$label" :for="$inputId" :required="$required" :help="$help" :messages="$messages">
-    <input type="{{ $type }}"
-           id="{{ $inputId }}"
-           name="{{ $name }}"
-           value="{{ old($name, $value) }}"
-           @if ($placeholder) placeholder="{{ $placeholder }}" @endif
-           @required($required)
-           @disabled($disabled)
-           @if ($hasError) aria-invalid="true" @endif
-           {{ $attributes->merge(['class' => Input::classes(Size::resolve($size), $hasError)]) }}>
+    <textarea id="{{ $inputId }}"
+              name="{{ $name }}"
+              rows="{{ $rows }}"
+              @if ($placeholder) placeholder="{{ $placeholder }}" @endif
+              @required($required)
+              @disabled($disabled)
+              @if ($hasError) aria-invalid="true" @endif
+              {{ $attributes->merge(['class' => Input::classes(Size::resolve($size), $hasError)]) }}>{{ old($name, $value) }}</textarea>
 </x-form.field>
