@@ -119,6 +119,24 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_segment_marks_the_selected_choice(): void
+    {
+        $this->withViewErrors([]);
+
+        $html = Blade::render(
+            '<x-form.segment name="basis" label="基準日" :options="$options" selected="ordered_at" />',
+            ['options' => ['expected_close_date' => '予定クローズ日', 'ordered_at' => '受注日']],
+        );
+
+        // 見た目はボタン、中身はラジオ(キーボードでも選べる)
+        $this->assertStringContainsString('role="radiogroup"', $html);
+        $this->assertStringContainsString('type="radio"', $html);
+        $this->assertMatchesRegularExpression('/value="ordered_at"[^>]*checked/s', $html);
+        $this->assertMatchesRegularExpression('/for="basis-ordered_at"[^>]*bg-primary/s', $html, '選択中だけ塗りつぶす。');
+        $this->assertStringContainsString('予定クローズ日', $html);
+    }
+
+    #[Test]
     public function a_badge_uses_the_tone_colors(): void
     {
         $this->assertStringContainsString('bg-emerald-100', Blade::render('<x-badge tone="success">受注</x-badge>'));

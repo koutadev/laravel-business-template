@@ -945,6 +945,33 @@ MasterRoutes::register('warehouses', WarehouseController::class, 'warehouses');
 
 検索フォーム・ページャ・CSV ボタン・削除済み切り替えは `<x-data-table>` が描画するため書く必要はありません。
 
+#### セレクト以外の絞り込みを足す（期間フィルタなど）
+
+`filters()` はセレクトボックス 1 つ = 1 パラメータですが、期間フィルタのように
+複数の入力（プリセット・開始日・終了日など）をまとめて送りたい場合は
+`statefulParameters()` にパラメータ名を並べます。
+
+```php
+public function statefulParameters(): array
+{
+    return ['period_basis', 'period_preset', 'period_from', 'period_to'];
+}
+```
+
+これだけで他の絞り込みと同じように **前回の状態が保持され**、並び替え・ページ送り・CSV の
+リンクにも引き継がれます（値は `$state->extra('period_preset')` で取り出し、`query()` で絞り込む）。
+入力欄そのものは `<x-data-table>` の `extraFilters` スロットに置くと検索ボタンと同じフォームで送信されます。
+
+```blade
+<x-data-table :table="$table">
+    <x-slot name="extraFilters">
+        <x-form.segment name="period_basis" :options="[...]" :selected="..." />
+        <x-date-range name="period" :preset="..." :from="..." :to="..." />
+    </x-slot>
+    ...
+</x-data-table>
+```
+
 ### コード体系
 
 | マスタ | 例 | | マスタ | 例 |

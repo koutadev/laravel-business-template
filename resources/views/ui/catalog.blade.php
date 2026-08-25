@@ -85,6 +85,11 @@
                                   :options="['standard' => 'スタンダード', 'premium' => 'プレミアム']"
                                   selected="standard" />
 
+                    <x-form.segment name="catalog_basis" label="基準日"
+                                    :options="['expected_close_date' => '予定クローズ日', 'ordered_at' => '受注日']"
+                                    selected="expected_close_date"
+                                    help="2〜4 個程度の切り替えに使います。" />
+
                     <x-form.checkbox name="catalog_active" label="有効" :checked="true"
                                      help="無効にすると選択肢に出なくなります。" />
 
