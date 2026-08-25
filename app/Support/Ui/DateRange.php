@@ -81,8 +81,8 @@ class DateRange
      *
      * @template TModel of \Illuminate\Database\Eloquent\Model
      *
-     * @param  Builder<TModel>  $query
-     * @return Builder<TModel>
+     * @param  Builder<covariant TModel>  $query
+     * @return Builder<covariant TModel>
      */
     public function apply(Builder $query, string $column): Builder
     {

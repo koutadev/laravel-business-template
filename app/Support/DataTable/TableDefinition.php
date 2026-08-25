@@ -101,6 +101,19 @@ abstract class TableDefinition
     }
 
     /**
+     * 追加パラメータ(statefulParameters)による絞り込み。
+     *
+     * 期間フィルタのようにセレクト 1 つでは表せない条件は、ここでクエリに反映する。
+     * 一覧・CSV・サマリはいずれも同じクエリを通るため、書くのは 1 か所でよい。
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function applyExtraFilters(Builder $query, TableState $state): void
+    {
+        //
+    }
+
+    /**
      * キーワード検索欄のプレースホルダ。
      */
     public function searchPlaceholder(): string

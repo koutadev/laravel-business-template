@@ -959,7 +959,16 @@ public function statefulParameters(): array
 ```
 
 これだけで他の絞り込みと同じように **前回の状態が保持され**、並び替え・ページ送り・CSV の
-リンクにも引き継がれます（値は `$state->extra('period_preset')` で取り出し、`query()` で絞り込む）。
+リンクにも引き継がれます。値をクエリに反映するのは `applyExtraFilters()` の 1 か所だけで、
+一覧・CSV・サマリのいずれも同じクエリを通ります。
+
+```php
+public function applyExtraFilters(Builder $query, TableState $state): void
+{
+    DateRange::fromValues($state->extra('period_preset'), $state->extra('period_from'), $state->extra('period_to'))
+        ->apply($query, $state->extra('period_basis') ?: 'expected_close_date');
+}
+```
 入力欄そのものは `<x-data-table>` の `extraFilters` スロットに置くと検索ボタンと同じフォームで送信されます。
 
 ```blade
