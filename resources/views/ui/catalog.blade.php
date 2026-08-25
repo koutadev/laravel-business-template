@@ -161,6 +161,28 @@
                                      placeholder="「あおい」などと入力"
                                      help="サーバ側でも同じ正規化を使うので、かな入力でも漢字の候補に当たります（250ms のデバウンスつき）。" />
 
+                    {{-- 連動する候補(顧客を選ぶと先方担当が変わる) --}}
+                    <div class="sm:col-span-2"
+                         x-data="{
+                             owner: '',
+                             contacts: {
+                                 1: [{ id: '11', name: '青井 一郎（営業部）' }, { id: '12', name: '青井 二郎（購買部）' }],
+                                 2: [{ id: '21', name: '色羽 三郎（総務部）' }],
+                                 3: [{ id: '31', name: '上野 四郎（情報システム部）' }, { id: '32', name: '上野 五郎（経理部）' }],
+                             },
+                             contactsFor() { return this.contacts[this.owner] ?? []; },
+                         }">
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <x-form.combobox name="catalog_owner" label="顧客（連動元）"
+                                             :options="$customers" model-expression="owner"
+                                             on-select="$dispatch('toast', { message: `${$event.detail.label || '未選択'} を選びました`, tone: 'info' })" />
+
+                            <x-form.combobox name="catalog_owner_contact" label="先方担当（顧客に連動）"
+                                             options-expression="contactsFor()"
+                                             help="上の顧客を選ぶと候補が入れ替わります（1〜3 社目に担当者を用意してあります）。" />
+                        </div>
+                    </div>
+
                     <x-form.combobox name="catalog_combo_disabled" label="無効"
                                      :options="$customers" selected="1" disabled />
 

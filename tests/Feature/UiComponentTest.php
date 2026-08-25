@@ -237,6 +237,48 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_combobox_can_be_bound_to_the_surrounding_alpine_state(): void
+    {
+        $this->withViewErrors([]);
+
+        $html = Blade::render(
+            '<x-form.combobox name="product" :options="$options" unique-id'
+            .' name-expression="`items[${index}][product_id]`"'
+            .' model-expression="row.product_id"'
+            .' options-expression="productsFor(row)"'
+            .' on-select="applyProduct(index)" />',
+            ['options' => [1 => 'ノートPC']],
+        );
+
+        // 繰り返し行でも使えるよう、送信名・id は実行時に決める
+        $this->assertStringContainsString('<input type="hidden" :name="`items[${index}][product_id]`"', $html);
+        $this->assertStringContainsString("x-id=\"['product']\"", $html);
+        // Blade がクォートをエスケープするので、実際の出力は &#039; になる
+        $this->assertStringContainsString(':id="$id(&#039;product&#039;)"', $html);
+
+        // 外側の状態との連携(双方向の値・候補の差し替え・選択時の処理)
+        $this->assertStringContainsString('x-modelable="value"', $html);
+        $this->assertStringContainsString('x-model="row.product_id"', $html);
+        $this->assertStringContainsString('x-effect="setOptions(productsFor(row))"', $html);
+        $this->assertStringContainsString('x-on:combobox-selected="applyProduct(index)"', $html);
+    }
+
+    #[Test]
+    public function an_async_combobox_shows_the_label_of_the_selected_value(): void
+    {
+        $this->withViewErrors([]);
+
+        // 非同期モードは候補を持たないので、選択中の名前は呼び出し側から渡す
+        $html = Blade::render(
+            '<x-form.combobox name="partner_id" source="/_ui/options" selected="7" selected-label="キタムラ運輸株式会社" />'
+        );
+
+        $this->assertStringContainsString('data-source="/_ui/options"', $html);
+        $this->assertStringContainsString('value\u0022:\u00227\u0022', $html);
+        $this->assertStringContainsString('キタムラ運輸株式会社', $html);
+    }
+
+    #[Test]
     public function a_combobox_can_be_searched_with_hiragana_or_katakana(): void
     {
         $this->withViewErrors([]);

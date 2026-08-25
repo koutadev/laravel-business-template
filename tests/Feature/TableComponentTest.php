@@ -5,7 +5,14 @@ namespace Tests\Feature;
 use App\Enums\RoleName;
 use App\Models\Employee;
 use App\Models\User;
+use App\Support\DataTable\Column;
+use App\Support\DataTable\Filter;
+use App\Support\DataTable\Table;
+use App\Support\DataTable\TableDefinition;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -50,6 +57,80 @@ class TableComponentTest extends TestCase
         $this->assertStringContainsString('w-32', $html);
         $this->assertStringContainsString('text-right', $html);
         $this->assertStringContainsString('操作', $html);
+    }
+
+    #[Test]
+    public function a_filter_can_be_shown_as_a_combobox(): void
+    {
+        $this->withViewErrors([]);
+
+        Employee::factory()->create(['name' => 'アオイ 太郎']);
+
+        $definition = new class extends TableDefinition
+        {
+            public function key(): string
+            {
+                return 'combo-examples';
+            }
+
+            public function routeName(): string
+            {
+                return 'masters.employees';
+            }
+
+            public function query(): Builder
+            {
+                return Employee::query();
+            }
+
+            public function columns(): array
+            {
+                return [new Column('name', '氏名')];
+            }
+
+            public function searchable(): array
+            {
+                return ['name'];
+            }
+
+            public function toCsvRow(Model $model): array
+            {
+                assert($model instanceof Employee);
+
+                return [$model->name];
+            }
+
+            public function filters(): array
+            {
+                return [
+                    // 候補が少ないものは今までどおりセレクト
+                    new Filter('employment_status', '在籍状況', ['active' => '在籍']),
+                    // 候補が多いものはコンボボックス(ここでは非同期モード)
+                    new Filter(
+                        name: 'department_id',
+                        label: '部署',
+                        options: [],
+                        source: '/_ui/options',
+                        labelResolver: static fn (string $value): ?string => $value === '7' ? '第一営業部' : null,
+                    ),
+                ];
+            }
+        };
+
+        $request = Request::create('/examples', 'GET', ['department_id' => '7']);
+        $request->setLaravelSession($this->app['session.store']);
+
+        $table = Table::make($definition, $request, false);
+        $html = Blade::render('<x-data-table :table="$table" />', ['table' => $table]);
+
+        // セレクトとコンボボックスが同じ絞り込み欄に並ぶ
+        $this->assertStringContainsString('<select id="dt-employment_status"', $html);
+        $this->assertStringNotContainsString('<select id="dt-department_id"', $html);
+        $this->assertStringContainsString('role="combobox"', $html);
+        $this->assertStringContainsString('data-source="/_ui/options"', $html);
+
+        // 非同期モードでも、選択中の値の名前が出る
+        $this->assertStringContainsString('第一営業部', $html);
     }
 
     #[Test]

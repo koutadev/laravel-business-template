@@ -971,6 +971,24 @@ public function applyExtraFilters(Builder $query, TableState $state): void
 ```
 入力欄そのものは `<x-data-table>` の `extraFilters` スロットに置くと検索ボタンと同じフォームで送信されます。
 
+絞り込みの選択肢が多いとき（顧客・担当者など）は、`Filter` をコンボボックス表示に切り替えられます。
+候補をそのまま渡す静的モードと、`source` に問い合わせ先を渡す非同期モードのどちらでも同じ書き方です。
+
+```php
+new Filter(name: 'partner_id', label: '顧客', options: $customers, combobox: true);
+
+new Filter(
+    name: 'partner_id',
+    label: '顧客',
+    options: [],                       // 候補は持たず、入力のたびに問い合わせる
+    source: route('options.customers'),
+    labelResolver: fn (string $id): ?string => Partner::query()->whereKey($id)->value('name'),
+);
+```
+
+非同期モードでは候補を手元に持たないため、選択中の値の名前だけ `labelResolver` で引きます
+（URL 直打ち対策として、非同期モードは ID（数字）のみを受け付けます）。
+
 ```blade
 <x-data-table :table="$table">
     <x-slot name="extraFilters">
