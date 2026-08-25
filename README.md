@@ -9,6 +9,15 @@ CRM・受発注・予約・勤怠・EC —— 業務システムは分野が違�
 新しい業務システムを始めるときは、これを clone して業務固有のテーブルと画面を足すところから開始できます。
 複数システムを同じ構造で作れるため、将来それらを 1 つに統合する際の障壁も小さくなります。
 
+## この基盤から作った実例
+
+| システム | 内容 | リンク |
+| --- | --- | --- |
+| **crm-sales** | BtoB 法人営業向けの CRM（顧客・商談・明細・内税での金額管理・売上ダッシュボード・カンバン・予実管理） | [リポジトリ](https://github.com/koutadev/crm-sales) ／ [動くデモ](https://crm-demo-static-snowy.vercel.app) |
+
+crm-sales では、この基盤を `bin/sync-shared-ui.sh` で取り込んで追随させています。
+共通部分（一覧基盤・UI 部品・マスタ・組織）はこちらで直し、業務固有の部分だけを各システムに置く運用です。
+
 ```bash
 git clone <this-repo> my-new-system && cd my-new-system
 docker compose up -d
