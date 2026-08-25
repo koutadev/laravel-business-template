@@ -149,6 +149,22 @@
                 </p>
             </x-card>
 
+            {{-- 構成比バー --}}
+            <x-card title="構成比バー" subtitle="内訳を横棒で見せる（一覧のサマリなど）">
+                <x-stacked-bar unit="円"
+                               :segments="[
+                                   ['label' => '見込み', 'value' => 3200000, 'class' => 'bg-gray-400'],
+                                   ['label' => '提案中', 'value' => 5400000, 'class' => 'bg-sky-500'],
+                                   ['label' => '見積提示', 'value' => 2800000, 'class' => 'bg-amber-500'],
+                                   ['label' => '受注', 'value' => 7600000, 'class' => 'bg-emerald-500'],
+                                   ['label' => '失注', 'value' => 900000, 'class' => 'bg-rose-500'],
+                               ]" />
+
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    値が 0 の区分は棒に出ません。読み上げ用に全体の内訳を aria-label に入れています。
+                </p>
+            </x-card>
+
             {{-- コンボボックス --}}
             <x-card title="コンボボックス" subtitle="入力で候補を絞る。静的モードと非同期モードの両対応">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">

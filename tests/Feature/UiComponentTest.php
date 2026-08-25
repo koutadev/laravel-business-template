@@ -137,6 +137,44 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_stacked_bar_shows_the_share_of_each_segment(): void
+    {
+        $html = Blade::render(
+            '<x-stacked-bar unit="円" :segments="$segments" />',
+            ['segments' => [
+                ['label' => '受注', 'value' => 750, 'class' => 'bg-emerald-500'],
+                ['label' => '失注', 'value' => 250, 'class' => 'bg-rose-500'],
+                ['label' => '見込み', 'value' => 0, 'class' => 'bg-gray-400'],
+            ]],
+        );
+
+        // 構成比が幅とラベルの両方に出る
+        $this->assertStringContainsString('width: 75%', $html);
+        $this->assertStringContainsString('width: 25%', $html);
+        $this->assertStringContainsString('75%', $html);
+        $this->assertStringContainsString('bg-emerald-500', $html);
+
+        // 0 の区分は棒に出ないが、凡例には残る
+        $this->assertSame(2, substr_count($html, 'style="width:'));
+        $this->assertStringContainsString('見込み', $html);
+
+        // 読み上げ用の説明
+        $this->assertStringContainsString('aria-label="受注 750円、失注 250円、見込み 0円"', $html);
+    }
+
+    #[Test]
+    public function an_empty_stacked_bar_says_so(): void
+    {
+        $html = Blade::render(
+            '<x-stacked-bar :segments="$segments" empty="対象の商談がありません" />',
+            ['segments' => [['label' => '受注', 'value' => 0, 'class' => 'bg-emerald-500']]],
+        );
+
+        $this->assertStringContainsString('対象の商談がありません', $html);
+        $this->assertStringNotContainsString('style="width:', $html);
+    }
+
+    #[Test]
     public function a_badge_uses_the_tone_colors(): void
     {
         $this->assertStringContainsString('bg-emerald-100', Blade::render('<x-badge tone="success">受注</x-badge>'));

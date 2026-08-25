@@ -945,6 +945,20 @@ MasterRoutes::register('warehouses', WarehouseController::class, 'warehouses');
 
 検索フォーム・ページャ・CSV ボタン・削除済み切り替えは `<x-data-table>` が描画するため書く必要はありません。
 
+#### 内訳を見せる（構成比バー）
+
+一覧のサマリなどで「何がどれくらいを占めるか」を出すときは `<x-stacked-bar>` を使います。
+
+```blade
+<x-stacked-bar unit="円" :segments="[
+    ['label' => '受注', 'value' => 7600000, 'class' => 'bg-emerald-500'],
+    ['label' => '失注', 'value' => 900000, 'class' => 'bg-rose-500'],
+]" />
+```
+
+構成比は渡した値から計算します（`total` を渡せばそれを 100% とします）。
+値が 0 の区分は棒に出ず、凡例には残ります。
+
 #### 保存ビュー（マイビュー）を有効にする
 
 よく使う絞り込みの組み合わせに名前を付けて保存し、一覧上部のプルダウンから
