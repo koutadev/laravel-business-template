@@ -11,6 +11,7 @@ use App\Http\Controllers\Masters\PositionController;
 use App\Http\Controllers\Masters\ProductCategoryController;
 use App\Http\Controllers\Masters\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\UserController;
 use App\Support\DataTable\Column;
 use App\Support\Routing\MasterRoutes;
@@ -55,6 +56,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware('permission:'.PermissionName::DashboardView->value)
         ->name('dashboard');
+
+    // 一覧の保存ビュー(マイビュー)。自分のぶんだけ作れて、消せる
+    Route::post('/saved-views', [SavedViewController::class, 'store'])->name('saved-views.store');
+    Route::delete('/saved-views/{savedView}', [SavedViewController::class, 'destroy'])
+        ->whereNumber('savedView')
+        ->name('saved-views.destroy');
 
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])
         ->middleware('permission:'.PermissionName::ActivityLogView->value)
