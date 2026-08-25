@@ -9,6 +9,7 @@ use App\Models\Partner;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\User;
+use App\Support\Dashboard\Chart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -79,6 +80,39 @@ class DashboardTest extends TestCase
         // Blade 側は canvas の data 属性に JSON を載せるだけ
         $response->assertSee('id="chart-partner-type"', false);
         $response->assertSee('id="chart-product-category"', false);
+    }
+
+    #[Test]
+    public function a_chart_can_show_short_labels_with_full_names_in_the_tooltip(): void
+    {
+        $chart = Chart::bar('sales', '担当者別 売上', ['山田' => 120, '佐藤' => 80], '売上')
+            ->withTooltipLabels(['山田 太郎', '佐藤 花子']);
+
+        $config = $chart->toChartJs();
+
+        // 目盛りは短いまま、ツールチップ用の名前を別に持たせる(差し替えは charts.js が行う)
+        $this->assertSame(['山田', '佐藤'], $config['data']['labels']);
+        $this->assertSame(['山田 太郎', '佐藤 花子'], $config['data']['tooltipLabels']);
+
+        // 読み上げ向けの説明ではフルネームを使う
+        $this->assertSame('担当者別 売上：山田 太郎 120、佐藤 花子 80', $chart->summary());
+    }
+
+    #[Test]
+    public function a_chart_is_described_for_screen_readers(): void
+    {
+        $this->actingAsRole(RoleName::Admin);
+
+        $category = ProductCategory::factory()->create(['name' => 'IT機器']);
+        Product::factory()->count(2)->create(['product_category_id' => $category->id]);
+        Partner::factory()->create();
+
+        $html = $this->get(route('dashboard'))->assertOk()->getContent();
+
+        // canvas は読み上げられないので、role/aria と本文の説明を添える
+        $this->assertStringContainsString('role="img"', $html);
+        $this->assertMatchesRegularExpression('/aria-describedby="chart-[a-z-]+-summary"/', $html);
+        $this->assertMatchesRegularExpression('/<p id="chart-[a-z-]+-summary" class="sr-only">/', $html);
     }
 
     #[Test]

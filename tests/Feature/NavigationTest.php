@@ -142,4 +142,28 @@ class NavigationTest extends TestCase
             ->assertOk()
             ->assertDontSee('メインメニュー');
     }
+
+    #[Test]
+    public function the_sidebar_toggle_sits_at_the_middle_of_the_nav_edge(): void
+    {
+        $this->actingAs($this->userWithRole(RoleName::Admin));
+
+        $html = $this->get(route('dashboard'))->assertOk()->getContent();
+
+        // ナビの右端・高さの中央に置く(ナビ幅が変わればボタンもついてくる)
+        $this->assertMatchesRegularExpression('/class="absolute top-1\/2 -end-3[^"]*"/', $html);
+
+        // 開いているときは ≪、閉じているときは ≫
+        $this->assertMatchesRegularExpression('/x-show="! collapsed"[^>]*>|<svg[^>]*x-show="! collapsed"/s', $html);
+        $this->assertStringContainsString('M18.75 19.5 11.25 12l7.5-7.5m-6 15L5.25 12l7.5-7.5', $html);
+        $this->assertStringContainsString('m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5', $html);
+
+        // 状態は aria でも伝える
+        $this->assertStringContainsString(':aria-expanded="(! collapsed).toString()"', $html);
+        $this->assertStringContainsString('aria-controls="app-sidebar"', $html);
+        $this->assertStringContainsString(":aria-label=\"collapsed ? 'メニューを開く' : 'メニューを折りたたむ'\"", $html);
+
+        // 以前あった下部のボタンは無くなっている
+        $this->assertStringNotContainsString('メニューを折りたたむ</span>', $html);
+    }
 }

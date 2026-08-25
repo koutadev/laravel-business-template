@@ -175,6 +175,22 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_kpi_card_keeps_long_numbers_inside_the_card(): void
+    {
+        $html = Blade::render('<x-kpi-card label="売上" :value="1084635562" unit="円" note="今月" />');
+
+        // カード幅に合わせて縮み、入りきらなければ省略する(全桁はホバーで見せる)
+        $this->assertStringContainsString('@container', $html);
+        $this->assertStringContainsString('clamp(1.125rem,9cqi,1.875rem)', $html);
+        $this->assertStringContainsString('truncate', $html);
+        $this->assertStringContainsString('title="1,084,635,562 円"', $html);
+
+        // 単位は数字と同じ行に留める
+        $this->assertStringContainsString('shrink-0 whitespace-nowrap', $html);
+        $this->assertStringContainsString('1,084,635,562', $html);
+    }
+
+    #[Test]
     public function a_badge_uses_the_tone_colors(): void
     {
         $this->assertStringContainsString('bg-emerald-100', Blade::render('<x-badge tone="success">受注</x-badge>'));
