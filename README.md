@@ -945,6 +945,18 @@ MasterRoutes::register('warehouses', WarehouseController::class, 'warehouses');
 
 検索フォーム・ページャ・CSV ボタン・削除済み切り替えは `<x-data-table>` が描画するため書く必要はありません。
 
+#### 表以外の見せ方に絞り込みを付ける
+
+`<x-data-table>` の中身のうち、絞り込み欄（保存ビュー + 検索フォーム）は
+`<x-table-filters>` として単独でも使えます。カンバンのように表ではない画面でも、
+一覧とまったく同じ絞り込み・保存ビューをそのまま置けます。
+
+```blade
+<x-table-filters :table="$table">
+    <x-slot name="extraFilters"> … </x-slot>
+</x-table-filters>
+```
+
 #### 内訳を見せる（構成比バー）
 
 一覧のサマリなどで「何がどれくらいを占めるか」を出すときは `<x-stacked-bar>` を使います。
