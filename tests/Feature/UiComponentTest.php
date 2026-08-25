@@ -137,6 +137,39 @@ class UiComponentTest extends TestCase
     }
 
     #[Test]
+    public function a_gauge_shows_the_achievement_rate_with_its_state(): void
+    {
+        // 未達(80% 未満)
+        $behind = Blade::render('<x-gauge label="当月" :actual="4200000" :target="10000000" unit="円" />');
+        $this->assertStringContainsString('42%', $behind);
+        $this->assertStringContainsString('未達', $behind);
+        $this->assertStringContainsString('bg-rose-600', $behind);
+        $this->assertStringContainsString('width: 42%', $behind);
+        $this->assertStringContainsString('残り', $behind);
+
+        // 達成間近(80% 以上)
+        $near = Blade::render('<x-gauge label="当月" :actual="8800000" :target="10000000" unit="円" />');
+        $this->assertStringContainsString('達成間近', $near);
+        $this->assertStringContainsString('bg-amber-600', $near);
+
+        // 達成(100% 以上。棒は振り切れない)
+        $done = Blade::render('<x-gauge label="当月" :actual="12500000" :target="10000000" unit="円" />');
+        $this->assertStringContainsString('125%', $done);
+        $this->assertStringContainsString('bg-emerald-600', $done);
+        $this->assertStringContainsString('width: 100%', $done);
+
+        // 目標が無いときは達成率を出さない
+        $none = Blade::render('<x-gauge label="当月" :actual="3200000" :target="0" unit="円" />');
+        $this->assertStringContainsString('目標未設定', $none);
+        $this->assertStringNotContainsString('%</p>', $none);
+
+        // 読み上げ
+        $this->assertStringContainsString('role="progressbar"', $behind);
+        $this->assertStringContainsString('aria-valuenow="42"', $behind);
+        $this->assertStringContainsString('目標 10,000,000円 に対して実績 4,200,000円、達成率 42%（未達）', $behind);
+    }
+
+    #[Test]
     public function a_stacked_bar_shows_the_share_of_each_segment(): void
     {
         $html = Blade::render(

@@ -149,6 +149,27 @@
                 </p>
             </x-card>
 
+            {{-- 達成率ゲージ --}}
+            <x-card title="達成率ゲージ" subtitle="目標に対する実績。未達 / 達成間近 / 達成 を色で示す">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    <x-gauge label="当月（未達）" :actual="4200000" :target="10000000" unit="円" />
+                    <x-gauge label="当月（達成間近）" :actual="8800000" :target="10000000" unit="円" />
+                    <x-gauge label="当月（達成）" :actual="12500000" :target="10000000" unit="円" />
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    <x-gauge label="目標未設定" :actual="3200000" :target="0" unit="円" />
+                    <x-gauge label="件数でも使える" :actual="18" :target="20" unit="件" size="sm" />
+                    <x-gauge label="注記つき" :actual="9500000" :target="10000000" unit="円" size="lg"
+                             note="受注日ベース" />
+                </div>
+
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    100% を超えても棒は振り切れません（数値では超過ぶんも分かります）。
+                    読み上げには「目標 … に対して実績 …、達成率 …」を渡しています。
+                </p>
+            </x-card>
+
             {{-- 構成比バー --}}
             <x-card title="構成比バー" subtitle="内訳を横棒で見せる（一覧のサマリなど）">
                 <x-stacked-bar unit="円"
