@@ -935,6 +935,21 @@ MasterRoutes::register('warehouses', WarehouseController::class, 'warehouses');
 ```
 
 一覧・CSV に `master.view`、登録・編集・削除・復元に `master.manage` が自動で設定されます。
+マスタ単位に権限を分けたい場合は、必要な権限を渡します
+（例: 管理者だけが扱うマスタ）。
+
+```php
+MasterRoutes::register(
+    'warehouses', WarehouseController::class, 'warehouses',
+    PermissionName::WarehouseManage, PermissionName::WarehouseManage,
+);
+```
+
+このときは、コントローラ側でも `managePermission()` を上書きし、
+一覧のビューに `:manage-permission="$managePermission"` を渡します
+（「新規登録」「編集 / 削除」の出し分けに使われます）。
+マスタ管理ハブのカードも、そのユーザーが開けるものだけが並びます
+（`MasterCatalog::visibleCards()`）。
 
 **⑤ ビュー**（`resources/views/masters/warehouses/index.blade.php`）
 
