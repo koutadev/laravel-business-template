@@ -330,8 +330,9 @@
                     x-data
                     @confirmed.window="$store.toast.push({ type: 'success', message: '実行しました（デモ）。' })">
                 <div class="flex flex-wrap gap-3">
+                    {{-- data-open-modal は Alpine のスコープ外でも効く（推奨の書き方） --}}
                     <x-button type="button" variant="secondary"
-                              x-on:click="$dispatch('open-modal', 'demo-detail')">詳細を開く</x-button>
+                              data-open-modal="demo-detail">詳細を開く</x-button>
 
                     <x-button type="button" variant="secondary"
                               x-on:click="$dispatch('open-modal', 'demo-edit')">編集フォームを開く</x-button>

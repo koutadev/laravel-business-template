@@ -736,7 +736,7 @@ $range->toQuery('closed');                       // ページャなどに引き�
 開閉は名前つきのイベントで行うので、開くボタンはどこに置いても構いません。
 
 ```blade
-<x-button type="button" x-on:click="$dispatch('open-modal', 'employee-detail')">詳細</x-button>
+<x-button type="button" data-open-modal="employee-detail">詳細</x-button>
 
 <x-modal name="employee-detail" title="社員の詳細" size="md">
     本文（1-B のフォーム部品などをそのまま置ける）
@@ -768,7 +768,7 @@ $range->toQuery('closed');                       // ページャなどに引き�
 確認ダイアログは「メッセージ ＋ 実行 / キャンセル」の最小構成です。
 
 ```blade
-<x-button type="button" variant="danger" x-on:click="$dispatch('open-modal', 'delete-employee')">削除</x-button>
+<x-button type="button" variant="danger" data-open-modal="delete-employee">削除</x-button>
 
 <x-confirm-dialog name="delete-employee" title="社員を削除しますか？"
                   :action="route('masters.employees.destroy', $employee->id)"
