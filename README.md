@@ -14,8 +14,9 @@ CRM・受発注・予約・勤怠・EC —— 業務システムは分野が違�
 | システム | 内容 | リンク |
 | --- | --- | --- |
 | **crm-sales** | BtoB 法人営業向けの CRM（顧客・商談・明細・内税での金額管理・売上ダッシュボード・カンバン・予実管理） | [リポジトリ](https://github.com/koutadev/crm-sales) ／ [動くデモ](https://crm-demo-static-snowy.vercel.app) |
+| **reservation-yoga** | オンラインヨガのレッスン予約（会員のスマホ予約・行ロックによる定員/二重予約の防止・キャンセル待ちの繰り上げ・リマインド） | [リポジトリ](https://github.com/koutadev/reservation-yoga) ／ [動くデモ](https://yoga-demo-static.vercel.app) |
 
-crm-sales では、この基盤を `bin/sync-shared-ui.sh` で取り込んで追随させています。
+どちらも、この基盤を `bin/sync-shared-ui.sh` で取り込んで追随させています。
 共通部分（一覧基盤・UI 部品・マスタ・組織）はこちらで直し、業務固有の部分だけを各システムに置く運用です。
 
 ```bash
